@@ -6,7 +6,9 @@
 
 /dts-v1/;
 
+#include <dt-bindings/clock/sun60i-a733-ccu.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/reset/sun60i-a733-ccu.h>
 
 / {
 	compatible = "allwinner,a733";
@@ -134,16 +136,69 @@
 		arm,no-tick-in-suspend;
 	};
 
+	dcxo19_2M: dcxo19_2M_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <19200000>;
+		clock-output-names = "dcxo19_2M";
+	};
+
+	dcxo24M: dcxo24M_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <24000000>;
+		clock-output-names = "dcxo24M";
+	};
+
+	dcxo26M: dcxo26M_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <26000000>;
+		clock-output-names = "dcxo26M";
+	};
+
+	sys24M: sys24M_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <24000000>;
+		clock-output-names = "sys24M";
+	};
+
+	rc_16m: rc16m_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <16000000>;
+		clock-accuracy = <300000000>;
+		clock-output-names = "rc-16m";
+	};
+
+	ext_32k: ext32k_clk {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <32768>;
+		clock-output-names = "ext-32k";
+	};
+
 	soc {
 		compatible = "simple-bus";
 		#address-cells = <2>;
 		#size-cells = <2>;
 		ranges;
 
+		ccu: ccu@2002000 {
+			compatible = "allwinner,sun60iw2-ccu";
+			reg = <0x0 0x02002000 0x0 0x2000>;
+			clocks = <&dcxo24M>, <&rc_16m>;
+			clock-names = "hosc", "iosc";
+			#clock-cells = <1>;
+			#reset-cells = <1>;
+		};
+
 		uart0: uart@2500000 {
 			compatible = "snps,dw-apb-uart";
 			reg = <0x0 0x2500000 0x0 0x400>;
-			clock-frequency = <24000000>;
+			clocks = <&ccu CLK_UART1>;
+			resets = <&ccu RST_BUS_UART1>;
 			interrupts = <GIC_SPI 2 IRQ_TYPE_LEVEL_HIGH>;
 			reg-shift = <2>;
 			reg-io-width = <4>;
@@ -157,6 +212,20 @@
 			interrupt-controller;
 			#interrupt-cells = <3>;
 			#address-cells = <0>;
+		};
+
+		r_ccu: r_ccu@7010000 {
+			compatible = "allwinner,sun60iw2-r-ccu";
+			reg = <0x0 0x07010000 0x0 0x340>;
+			#clock-cells = <1>;
+			#reset-cells = <1>;
+		};
+
+		rtc_ccu: rtc_ccu@7090000 {
+			compatible = "allwinner,sun60iw2-rtc-ccu";
+			reg = <0x0 0x07090000 0x0 0x400>;
+			#clock-cells = <1>;
+			#reset-cells = <1>;
 		};
 	};
 };
