@@ -9,6 +9,60 @@
 
 #include "ccu_sdm.h"
 
+#if 0
+u32 ccu_get_sdmval(unsigned long rate, struct ccu_common *common, u32 n)
+{
+	u32 sdm_val, sdm_freq, step_value;
+	u64 x2, wave_step;
+	struct clk_sdm_info *sdm_info = common->sdm_info;
+
+	sdm_freq = 315 + sdm_info->sdm_freq * 5;
+
+	x2 = sdm_info->sdm_factor * n;
+	if (x2 >= 1000) {
+		sunxi_err(NULL, "clk: invalid sdm_factor: %d\n", sdm_info->sdm_factor);
+		return -1;
+	}
+	/*
+	 *      SDM_CLK_SEL->24M
+	 *      fix coefficient=2^17*2/24 = 10922.5
+	 **/
+	wave_step = 109225 * x2 * sdm_freq;
+
+	do_div(wave_step, 100000000);
+	step_value = (u32)wave_step;
+
+	sdm_val = (wave_step << 20);
+	/* enanle SDM */
+	sdm_val = SET_BITS(31, 1, sdm_val, 1);
+	/* choose freq_mode */
+	sdm_val = SET_BITS(29, 2, sdm_val, sdm_info->freq_mode);
+
+	/* choose sdm_freq */
+	sdm_val = SET_BITS(17, 2, sdm_val, sdm_info->sdm_freq);
+	/* Some platforms support the configuration of sdm_direction, and sdm_direction and sdm_clk share configuration bit */
+	if (sdm_info->sdm_direction != SDM_DIR_NONE)
+		sdm_val = SET_BITS(19, 1, sdm_val, sdm_info->sdm_direction);
+	else
+		sdm_val = SET_BITS(19, 1, sdm_val, 0);
+
+	sunxi_debug(NULL, "sdm_val: 0x%x wave_step: %llu, sdm_freq: %d freq_mode: %d sdm_dir: %d\n", sdm_val, wave_step, sdm_info->sdm_freq, sdm_info->freq_mode, sdm_info->sdm_direction);
+
+	return sdm_val;
+}
+
+void ccu_common_set_sdm_value(struct ccu_common *common, struct ccu_sdm_internal *sdm, u32 sdmval)
+{
+	if (sdm->enable)
+		set_bits(common->base + common->reg, sdm->enable);
+
+	set_field(common->base + sdm->tuning_reg, BITS_WIDTH(0, 32), sdmval);
+
+	if (sdm->pattern1_reg)
+		set_field(common->base + sdm->pattern1_reg, BITS_WIDTH(0, 32), sdm->pattern1_enable);
+}
+#endif
+
 bool ccu_sdm_helper_is_enabled(struct ccu_common *common,
 			       struct ccu_sdm_internal *sdm)
 {

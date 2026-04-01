@@ -113,6 +113,13 @@ static unsigned long ccu_nm_recalc_rate(struct clk_hw *hw,
 	if (nm->common.features & CCU_FEATURE_FIXED_POSTDIV)
 		rate /= nm->fixed_post_div;
 
+#if 0
+	if (nm->common.sdm_info) {
+		sdmval = ccu_get_sdmval(rate, &nm->common, n);
+		ccu_common_set_sdm_value(&nm->common, &nm->sdm, sdmval);
+	}
+#endif
+
 	return rate;
 }
 
