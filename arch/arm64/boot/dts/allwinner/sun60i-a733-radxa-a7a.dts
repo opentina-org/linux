@@ -19,6 +19,16 @@
 	};
 };
 
+&pio {
+	uart0_pins: uart0_pins {
+		pins = "PB9", "PB10";
+		function = "uart0";
+		drive-strength = <10>;
+	};
+};
+
 &uart0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart0_pins>;
 	status = "okay";
 };
