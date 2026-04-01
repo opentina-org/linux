@@ -7,6 +7,8 @@
 /dts-v1/;
 
 #include <dt-bindings/clock/sun60i-a733-ccu.h>
+#include <dt-bindings/clock/sun60i-a733-rtc.h>
+#include <dt-bindings/clock/sun60i-a733-r-ccu.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 #include <dt-bindings/reset/sun60i-a733-ccu.h>
 
@@ -185,6 +187,27 @@
 		#size-cells = <2>;
 		ranges;
 
+		pio: pinctrl@2000000 {
+			compatible = "allwinner,sun60iw2-pinctrl";
+			reg = <0x0 0x02000000 0x0 0x600>;
+			interrupts = <GIC_SPI 69 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 71 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 73 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 75 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 77 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 79 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 81 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 83 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 85 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 87 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_APB1>, <&dcxo24M>, <&rtc_ccu CLK_OSC32K>;
+			clock-names = "apb", "hosc", "losc";
+			gpio-controller;
+			#gpio-cells = <3>;
+			interrupt-controller;
+			#interrupt-cells = <3>;
+		};
+
 		ccu: ccu@2002000 {
 			compatible = "allwinner,sun60iw2-ccu";
 			reg = <0x0 0x02002000 0x0 0x2000>;
@@ -219,6 +242,19 @@
 			reg = <0x0 0x07010000 0x0 0x340>;
 			#clock-cells = <1>;
 			#reset-cells = <1>;
+		};
+
+		r_pio: pinctrl@7025000 {
+			compatible = "allwinner,sun60iw2-r-pinctrl";
+			reg = <0x0 0x07025000 0x0 0x410>;
+			interrupts = <GIC_SPI 198 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 200 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&r_ccu CLK_R_APBS0>, <&dcxo24M>, <&rtc_ccu CLK_OSC32K>;
+			clock-names = "apb", "hosc", "losc";
+			gpio-controller;
+			#gpio-cells = <4>;
+			interrupt-controller;
+			#interrupt-cells = <3>;
 		};
 
 		rtc_ccu: rtc_ccu@7090000 {
