@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: GPL-2.0-only
+if ARCH_SUNXI
+
+config PINCTRL_SUNXI_VENDOR
+	bool "Allwinner Vendor pinctrl driver"
+	select PINMUX
+	select GENERIC_PINCONF
+	select GPIOLIB
+
+config PINCTRL_SUN60I_A733
+	bool "Pinctrl support for Allwinner A733"
+	depends on PINCTRL_SUNXI_VENDOR
+
+config PINCTRL_SUN60I_A733_R
+	bool "Pinctrl support for Allwinner A733 PRCM"
+	depends on PINCTRL_SUNXI_VENDOR
+
+endif
