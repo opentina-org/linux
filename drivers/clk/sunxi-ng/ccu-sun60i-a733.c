@@ -459,12 +459,12 @@ static SUNXI_CCU_GATE(its_pcie0_a_clk, "its-pcie0-aclk",
 		0x0574, BIT(1), 0);
 
 static const struct clk_parent_data nsi_parents[] = {
-	{ .name = "sys24M" },
-	{ .name = "pll-ddr" },
-	{ .name = "pll-peri0-800m" },
-	{ .name = "pll-peri0-600m" },
-	{ .name = "pll-peri0-480m" },
-	{ .name = "pll-de-3x" },
+	{ .index = -1, .name = "sys24M" },
+	{ .index = -1, .name = "pll-ddr" },
+	{ .index = -1, .name = "pll-peri0-800m" },
+	{ .index = -1, .name = "pll-peri0-600m" },
+	{ .index = -1, .name = "pll-peri0-480m" },
+	{ .index = -1, .name = "pll-de-3x" },
 };
 
 static SUNXI_CCU_MP_DATA_WITH_MUX_GATE_FEAT(nsi_clk, "nsi",
@@ -481,12 +481,12 @@ static SUNXI_CCU_GATE(nsi_cfg_clk, "nsi-cfg",
 		0x0584, BIT(0), 0);
 
 static const struct clk_parent_data mbus_parents[] = {
-	{ .name = "sys24M" },
-	{ .name = "pll-peri0-600m"},
-	{ .name = "pll-ddr"},
-	{ .name = "pll-peri0-480m"},
-	{ .name = "pll-peri0-400m"},
-	{ .name = "pll-npu" },
+	{ .index = -1, .name = "sys24M" },
+	{ .index = -1, .name = "pll-peri0-600m"},
+	{ .index = -1, .name = "pll-ddr"},
+	{ .index = -1, .name = "pll-peri0-480m"},
+	{ .index = -1, .name = "pll-peri0-400m"},
+	{ .index = -1, .name = "pll-npu" },
 };
 
 static SUNXI_CCU_MP_DATA_WITH_MUX_GATE_FEAT(mbus_clk, "mbus",
@@ -1022,11 +1022,11 @@ static SUNXI_CCU_GATE(gpu0_bus_clk, "gpu0-gate",
 		0x0B24, BIT(0), 0);
 
 const struct clk_parent_data dram0_parents[] = {
-	{ .name = "pll-ddr"},
-	{ .name = "pll-peri1-800m"},
-	{ .name = "pll-peri1-600m"},
-	{ .name = "pll-de-3x"},
-	{ .name = "pll-npu"},
+	{ .index = -1, .name = "pll-ddr"},
+	{ .index = -1, .name = "pll-peri1-800m"},
+	{ .index = -1, .name = "pll-peri1-600m"},
+	{ .index = -1, .name = "pll-de-3x"},
+	{ .index = -1, .name = "pll-npu"},
 };
 static SUNXI_CCU_MP_DATA_WITH_MUX_GATE_FEAT(dram0_clk, "dram0",
 		dram0_parents, 0x0C00,
@@ -1063,11 +1063,11 @@ static SUNXI_CCU_GATE(nand0_bus_clk, "nand0-bus",
 		0x0C8C, BIT(0), 0);
 
 static const struct clk_parent_data smhc_parents[] = {
-	{ .name = "sys24M" },
-	{ .name = "pll-peri0-400m"},
-	{ .name = "pll-peri0-300m"},
-	{ .name = "pll-peri1-400m"},
-	{ .name = "pll-peri1-300m" },
+	{ .index = -1, .name = "sys24M" },
+	{ .index = -1, .name = "pll-peri0-400m"},
+	{ .index = -1, .name = "pll-peri0-300m"},
+	{ .index = -1, .name = "pll-peri1-400m"},
+	{ .index = -1, .name = "pll-peri1-300m" },
 };
 
 static SUNXI_CCU_DUALDIV_MUX_GATE(smhc0_clk, "smhc0",
@@ -1094,11 +1094,11 @@ static SUNXI_CCU_GATE(smhc1_gate_clk, "smhc1-gate",
 		0x0D1C, BIT(0), 0);
 
 static const struct clk_parent_data smhc2_parents[] = {
-	{ .name = "sys24M" },
-	{ .name = "pll-peri0-800m" },
-	{ .name = "pll-peri0-600m" },
-	{ .name = "pll-peri1-800m" },
-	{ .name = "pll-peri1-600m" },
+	{ .index = -1, .name = "sys24M" },
+	{ .index = -1, .name = "pll-peri0-800m" },
+	{ .index = -1, .name = "pll-peri0-600m" },
+	{ .index = -1, .name = "pll-peri1-800m" },
+	{ .index = -1, .name = "pll-peri1-600m" },
 };
 
 static SUNXI_CCU_DUALDIV_MUX_GATE(smhc2_clk, "smhc2",
@@ -1226,14 +1226,14 @@ static SUNXI_CCU_GATE(twi12_clk, "twi12",
 		0x0EB0, BIT(0), 0);
 
 static const struct clk_parent_data spi_parents[] = {
-	{ .name = "sys24M" },
-	{ .name = "pll-peri0-300m" },
-	{ .name = "pll-peri0-200m" },
-	{ .name = "pll-peri1-300m" },
-	{ .name = "pll-peri1-200m" },
-	{ .name = "pll-peri0-480m" },
-	{ .name = "pll-peri1-480m" },
-	{ .name = "dcxo" },
+	{ .index = -1, .name = "sys24M" },
+	{ .index = -1, .name = "pll-peri0-300m" },
+	{ .index = -1, .name = "pll-peri0-200m" },
+	{ .index = -1, .name = "pll-peri1-300m" },
+	{ .index = -1, .name = "pll-peri1-200m" },
+	{ .index = -1, .name = "pll-peri0-480m" },
+	{ .index = -1, .name = "pll-peri1-480m" },
+	{ .index = -1, .name = "dcxo" },
 };
 
 static SUNXI_CCU_DUALDIV_MUX_GATE(spi0_clk, "spi0",
@@ -1270,14 +1270,14 @@ static SUNXI_CCU_GATE(spi2_bus_clk, "spi2-bus",
 		0x0F14, BIT(0), 0);
 
 static const struct clk_parent_data spif_parents[] = {
-	{ .name = "sys24M" },
-	{ .name = "pll-peri0-400m" },
-	{ .name = "pll-peri0-300m" },
-	{ .name = "pll-peri1-400m" },
-	{ .name = "pll-peri1-300m" },
-	{ .name = "pll-peri0-160m" },
-	{ .name = "pll-peri1-160m" },
-	{ .name = "dcxo" },
+	{ .index = -1, .name = "sys24M" },
+	{ .index = -1, .name = "pll-peri0-400m" },
+	{ .index = -1, .name = "pll-peri0-300m" },
+	{ .index = -1, .name = "pll-peri1-400m" },
+	{ .index = -1, .name = "pll-peri1-300m" },
+	{ .index = -1, .name = "pll-peri0-160m" },
+	{ .index = -1, .name = "pll-peri1-160m" },
+	{ .index = -1, .name = "dcxo" },
 };
 
 static SUNXI_CCU_DUALDIV_MUX_GATE(spif_clk, "spif",
@@ -1701,10 +1701,10 @@ static SUNXI_CCU_GATE(tcontv1_clk, "tcontv1",
 		0x160C, BIT(0), CLK_IGNORE_UNUSED);
 
 static const struct clk_parent_data edp_tv_parents[] = {
-	{ .name = "pll-video0-4x" },
-	{ .name = "pll-video1-4x" },
-	{ .name = "pll-video2-4x" },
-	{ .name = "pll-peri0-2x" },
+	{ .index = -1, .name = "pll-video0-4x" },
+	{ .index = -1, .name = "pll-video1-4x" },
+	{ .index = -1, .name = "pll-video2-4x" },
+	{ .index = -1, .name = "pll-peri0-2x" },
 };
 
 static SUNXI_CCU_DUALDIV_MUX_GATE(edp_tv_clk, "edp-tv",
@@ -1727,10 +1727,10 @@ static SUNXI_CCU_MUX_WITH_GATE(hdmi_ref_clk, "hdmi-ref",
 		BIT(31), 0);
 
 static const struct clk_parent_data hdmi_tv_parents[] = {
-	{ .name = "pll-video0-4x" },
-	{ .name = "pll-video1-4x" },
-	{ .name = "pll-video2-4x" },
-	{ .name = "pll-peri0-2x" },
+	{ .index = -1, .name = "pll-video0-4x" },
+	{ .index = -1, .name = "pll-video1-4x" },
+	{ .index = -1, .name = "pll-video2-4x" },
+	{ .index = -1, .name = "pll-peri0-2x" },
 };
 
 static SUNXI_CCU_DUALDIV_MUX_GATE(hdmi_tv_clk, "hdmi-tv",
@@ -1781,13 +1781,13 @@ static SUNXI_CCU_GATE(dsc_clk, "dsc",
 		0x1744, BIT(0), 0);
 
 static const struct clk_parent_data csi_master_parents[] = {
-	{ .name = "sys24M" },
-	{ .name = "pll-video0-4x" },
-	{ .name = "pll-video0-3x" },
-	{ .name = "pll-video1-4x" },
-	{ .name = "pll-video1-3x" },
-	{ .name = "pll-video2-4x" },
-	{ .name = "pll-video2-3x" },
+	{ .index = -1, .name = "sys24M" },
+	{ .index = -1, .name = "pll-video0-4x" },
+	{ .index = -1, .name = "pll-video0-3x" },
+	{ .index = -1, .name = "pll-video1-4x" },
+	{ .index = -1, .name = "pll-video1-3x" },
+	{ .index = -1, .name = "pll-video2-4x" },
+	{ .index = -1, .name = "pll-video2-3x" },
 };
 
 static SUNXI_CCU_DUALDIV_MUX_GATE(csi_master0_clk, "csi-master0",
@@ -1866,9 +1866,9 @@ static SUNXI_CCU_GATE(fanout_24m_clk, "fanout-24m",
 		0x1F30, BIT(0), 0);
 
 static const struct clk_parent_data clk27m_fanout_parents[] = {
-	{ .name = "pll-video0-4x" },
-	{ .name = "pll-video1-4x" },
-	{ .name = "pll-video2-4x" },
+	{ .index = -1, .name = "pll-video0-4x" },
+	{ .index = -1, .name = "pll-video1-4x" },
+	{ .index = -1, .name = "pll-video2-4x" },
 };
 
 static SUNXI_CCU_DUALDIV_MUX_GATE(clk27m_fanout_clk, "clk27m_fanout",
@@ -1879,7 +1879,7 @@ static SUNXI_CCU_DUALDIV_MUX_GATE(clk27m_fanout_clk, "clk27m_fanout",
 		BIT(31), 0);
 
 static const struct clk_parent_data clk_fanout_parents[] = {
-	 { .name = "apb0" },
+	 { .index = -1, .name = "apb0" },
 };
 
 static SUNXI_CCU_DUALDIV_MUX_GATE(clk_fanout_clk, "clk-fanout",
