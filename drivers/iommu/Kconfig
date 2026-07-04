@@ -245,6 +245,15 @@ config SUN50I_IOMMU
 	help
 	  Support for the IOMMU introduced in the Allwinner H6 SoCs.
 
+config SUNXI_IOMMU
+	bool "Allwinner A733 IOMMU Support"
+	depends on HAS_DMA
+	depends on ARCH_SUNXI || COMPILE_TEST
+	select ARM_DMA_USE_IOMMU
+	select IOMMU_API
+	help
+	  Support for the IOMMU introduced in the Allwinner A733 SoCs.
+
 config TEGRA_IOMMU_SMMU
 	bool "NVIDIA Tegra SMMU Support"
 	depends on ARCH_TEGRA

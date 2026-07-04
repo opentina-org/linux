@@ -239,6 +239,38 @@
 			interrupts = <GIC_SPI 106 IRQ_TYPE_LEVEL_HIGH>;
 		};
 
+		mmu_aw: iommu@3900000 {
+			compatible = "allwinner,iommu-sunxi";
+			reg = <0x0 0x03900000 0x0 0x20000>;
+			interrupts = <GIC_SPI 170 IRQ_TYPE_LEVEL_HIGH>,
+				<GIC_SPI 171 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "iommu-irq1","iommu-irq2";
+			clocks = <&ccu CLK_IOMMU0_SYS_H>,
+				<&ccu CLK_IOMMU0_SYS_P>,
+				<&ccu CLK_IOMMU0_SYS_MBUS>,
+				<&ccu CLK_IOMMU1_SYS_H>,
+				<&ccu CLK_IOMMU1_SYS_P>,
+				<&ccu CLK_IOMMU1_SYS_MBUS>
+			;
+			clock-names = "iommu0-sys-hclk",
+				"iommu0-sys-pclk",
+				"iommu0-sys-mclk",
+				"iommu1-sys-hclk",
+				"iommu1-sys-pclk",
+				"iommu1-sys-mclk"
+			;
+			resets = <&ccu RST_BUS_IOMMU0_SY>, <&ccu RST_BUS_IOMMU1_SY>;
+			/* clock-frequency = <24000000>; */
+			#iommu-cells = <2>;
+			version=<0x16>;
+			tlb_prefetch = <0x3007f>;
+			tlb_invalid_mode = <0x1>;
+			ptw_invalid_mode = <0x1>;
+			masters = "USB", "CSI", "ISP", "VE_ENC", "dummy04", "dummy05",
+				"VE_DEC0", "VE_DEC1", "DE0","DI","G2D","EINK", "DEBUG_MODE";
+
+		};
+
 		uart0: uart@2500000 {
 			compatible = "snps,dw-apb-uart";
 			reg = <0x0 0x2500000 0x0 0x400>;

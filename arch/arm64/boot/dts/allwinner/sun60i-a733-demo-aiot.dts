@@ -39,3 +39,29 @@
 &uart0 {
 	status = "okay";
 };
+
+/*
+ * IOMMU (sunxi-iommu): enable controller.
+ * Second cell of iommus: 1 = enable translation, 0 = bypass.
+ * USB/VE master bindings can be added when those DT nodes exist.
+ */
+&mmu_aw {
+	status = "okay";
+
+	usb_iommu {
+		iommu-master;
+		id = <0>;
+	};
+
+	dummy04 {
+		iommu-master;
+		id = <4>;
+		skip;
+	};
+
+	dummy05 {
+		iommu-master;
+		id = <5>;
+		skip;
+	};
+};
