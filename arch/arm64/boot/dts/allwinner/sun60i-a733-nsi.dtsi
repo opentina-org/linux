@@ -1,0 +1,139 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+/*
+ * Copyright (C) 2025 Allwinner Technology Co., Ltd.
+ */
+
+	nsi0: nsi-controller@2020000 {
+		compatible = "allwinner,sunxi-nsi";
+		interrupts = <GIC_SPI 43 IRQ_TYPE_LEVEL_HIGH>;
+		reg = <0x0 0x02020000 0x0 0x10000>,
+			<0x0 0x0A030000 0x0 0x20000>;
+		clocks = <&ccu CLK_PLL_DDR>, <&ccu CLK_MBUS> , <&ccu CLK_NSI>,
+			<&ccu CLK_PLL_PERI0_600M>, <&ccu CLK_GIC>, <&ccu CLK_NSI_CFG>,
+			<&ccu CLK_PLL_PERI0_600M>, <&ccu CLK_DRAM0>;
+		clock-names = "pll", "bus", "nsi", "nsi-p","gic", "nsi-cfg", "bus-p", "cpu_direct";
+		resets = <&ccu RST_BUS_NSI>, <&ccu RST_BUS_NSI_CFG>;
+		reset-names = "bus_nsi", "bus_nsi_cfg";
+		clock-frequency = <600000000>,<600000000>;
+		#nsi-cells = <1>;
+		clk_path_type = <1>;
+		topology_type = <2>;
+		channel_type = <2>;
+		master_clks = <6 2>,<10 4>,<18 2>,<19 2>,<20 2>,<32 2>,<33 2>;
+		ia_pmu_data_unit = <16>;
+		ra_pmu_data_unit = <64>;
+		ta_pmu_data_unit = <64>;
+		cpu_pmu_data_unit = <64>;
+		sub_node_id_mapping;
+
+		cpu0{
+			id = <19>;
+			cpu_direct_reg = <0x0A030000 0x2000>;
+			cpu_direct_mux = <0x8000200 0x0 0>;
+		};
+		cpu1{
+			id = <20>;
+			cpu_direct_reg = <0x0A040000 0x2000>;
+			cpu_direct_mux = <0x8000200 0x0 0>;
+		};
+
+		npu{
+			id = <18>;
+			/*
+			 * Do not put power-domains here: NSI master nodes are
+			 * not devices, so fw_devlink fails to link to pck600
+			 * ("Failed to create device link ... for .../npu").
+			 * PD_NPU is owned by npu@3600000 instead.
+			 */
+			/* Match other IA masters so NPU IAG QoS is programmed */
+			mode = <0>;
+			pri = <1>;
+			select = <1>;
+		};
+
+		usb_pcie{
+			id=<13>;
+		};
+
+		gpu{
+			id = <6>;
+		};
+
+		iommu0{
+			id = <14>;
+			mode = <0>;
+			pri = <3>;
+			select = <1>;
+		};
+
+		iommu1{
+			id = <15>;
+			mode = <0>;
+			pri = <3>;
+			select = <1>;
+		};
+
+		de {
+			id = <2>;
+			mode = <0>;
+			pri = <2>;
+			select = <1>;
+		};
+
+		eink {
+			id = <3>;
+			mode = <0>;
+			pri = <1>;
+			select = <1>;
+		};
+
+		di {
+			id = <4>;
+			mode = <0>;
+			pri = <1>;
+			select = <1>;
+		};
+
+		g2d {
+			id = <5>;
+			mode = <0>;
+			pri = <1>;
+			select = <1>;
+		};
+
+		ve0 {
+			id = <7>;
+			mode = <0>;
+			pri = <1>;
+			select = <1>;
+		};
+
+		ve1 {
+			id = <8>;
+			mode = <0>;
+			pri = <1>;
+			select = <1>;
+		};
+
+		ve2 {
+			id = <9>;
+			mode = <0>;
+			pri = <1>;
+			select = <1>;
+		};
+
+
+		isp {
+			id = <16>;
+			mode = <0>;
+			pri = <2>;
+			select = <1>;
+		};
+
+		csi {
+			id = <17>;
+			mode = <0>;
+			pri = <2>;
+			select = <1>;
+		};
+	};

@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: GPL-2.0-only
+
+config ARCH_SUN60IW2
+	bool
+	depends on ARCH_SUNXI
+	default y if SUN60I_A733_CCU
+
+config SUNXI_NSI
+	tristate "Allwinner NSI interconnect driver (A733)"
+	depends on SUN60I_A733_CCU
+	select ARCH_SUN60IW2
+	select HWMON
+	help
+	  Say Y here to enable the Allwinner Network System Interconnect
+	  (NSI) driver for the A733. NSI manages bus bandwidth and priority
+	  between masters such as CPU, GPU, NPU and multimedia blocks.
