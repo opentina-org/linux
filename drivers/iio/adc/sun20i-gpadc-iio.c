@@ -45,6 +45,14 @@
 
 #define SUN20I_GPADC_WORK_MODE_SINGLE			0
 
+struct sun20i_gpadc_variant {
+	bool has_hosc_clock;
+};
+
+static const struct sun20i_gpadc_variant sun20i_gpadc_v101_variant = {
+	.has_hosc_clock = true,
+};
+
 struct sun20i_gpadc_iio {
 	void __iomem		*regs;
 	struct completion	completion;
@@ -174,13 +182,46 @@ static int sun20i_gpadc_alloc_channels(struct iio_dev *indio_dev,
 	return 0;
 }
 
+static int sun20i_gpadc_enable_clocks(struct device *dev,
+				      const struct sun20i_gpadc_variant *variant)
+{
+	struct clk *bus_clk;
+	int ret;
+
+	if (variant && variant->has_hosc_clock) {
+		struct clk *hosc_clk = devm_clk_get(dev, "hosc");
+
+		if (IS_ERR(hosc_clk))
+			return dev_err_probe(dev, PTR_ERR(hosc_clk),
+					     "failed to get hosc clock\n");
+
+		ret = clk_prepare_enable(hosc_clk);
+		if (ret)
+			return dev_err_probe(dev, ret, "failed to enable hosc clock\n");
+	}
+
+	bus_clk = devm_clk_get(dev, "bus");
+	if (IS_ERR(bus_clk))
+		bus_clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(bus_clk))
+		return dev_err_probe(dev, PTR_ERR(bus_clk),
+				     "failed to get bus clock\n");
+
+	ret = clk_prepare_enable(bus_clk);
+	if (ret)
+		return dev_err_probe(dev, ret, "failed to enable bus clock\n");
+
+	return 0;
+}
+
 static int sun20i_gpadc_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
+	const struct sun20i_gpadc_variant *variant =
+		device_get_match_data(&pdev->dev);
 	struct iio_dev *indio_dev;
 	struct sun20i_gpadc_iio *info;
 	struct reset_control *rst;
-	struct clk *clk;
 	int irq;
 	int ret;
 
@@ -205,9 +246,9 @@ static int sun20i_gpadc_probe(struct platform_device *pdev)
 	if (IS_ERR(info->regs))
 		return PTR_ERR(info->regs);
 
-	clk = devm_clk_get_enabled(dev, NULL);
-	if (IS_ERR(clk))
-		return dev_err_probe(dev, PTR_ERR(clk), "failed to enable bus clock\n");
+	ret = sun20i_gpadc_enable_clocks(dev, variant);
+	if (ret)
+		return ret;
 
 	rst = devm_reset_control_get_exclusive(dev, NULL);
 	if (IS_ERR(rst))
@@ -243,6 +284,11 @@ static int sun20i_gpadc_probe(struct platform_device *pdev)
 
 static const struct of_device_id sun20i_gpadc_of_id[] = {
 	{ .compatible = "allwinner,sun20i-d1-gpadc" },
+	{ .compatible = "allwinner,sun50i-h616-gpadc" },
+	{ .compatible = "allwinner,sunxi-gpadc-v101",
+	  .data = &sun20i_gpadc_v101_variant },
+	{ .compatible = "allwinner,sun60i-a733-gpadc",
+	  .data = &sun20i_gpadc_v101_variant },
 	{ }
 };
 MODULE_DEVICE_TABLE(of, sun20i_gpadc_of_id);

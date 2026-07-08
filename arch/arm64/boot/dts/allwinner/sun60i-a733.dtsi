@@ -20,6 +20,10 @@
 	#address-cells = <2>;
 	#size-cells = <2>;
 
+	aliases {
+		gpadc0 = &gpadc0;
+	};
+
 	cpus {
 		#address-cells = <2>;
 		#size-cells = <0>;
@@ -507,6 +511,46 @@
 			pinctrl-names = "active", "sleep";
 			reg = <0x0 0x02527019 0x0 0x4>;
 			reg_base = <0x02527000>;
+			status = "disabled";
+		};
+
+		gpadc0: gpadc@2521000 {
+			compatible = "allwinner,sunxi-gpadc-v101",
+				     "allwinner,sun60i-a733-gpadc",
+				     "allwinner,sun20i-d1-gpadc";
+			reg = <0x0 0x02521000 0x0 0x400>;
+			interrupts = <GIC_SPI 38 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_GPADC0>, <&ccu CLK_GPADC0_24M>;
+			clock-names = "bus", "hosc";
+			resets = <&ccu RST_BUS_GPADC0>;
+			status = "disabled";
+			#io-channel-cells = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			channel@0 {
+				reg = <0>;
+			};
+
+			channel@1 {
+				reg = <1>;
+			};
+
+			channel@2 {
+				reg = <2>;
+			};
+
+			channel@3 {
+				reg = <3>;
+			};
+		};
+
+		lradc: lradc@2524000 {
+			compatible = "allwinner,keyboard_1350mv";
+			reg = <0x0 0x02524000 0x0 0x100>;
+			interrupts = <GIC_SPI 37 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_LRADC>;
+			resets = <&ccu RST_BUS_LRADC>;
 			status = "disabled";
 		};
 

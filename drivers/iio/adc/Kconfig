@@ -1528,12 +1528,12 @@ config SUN4I_GPADC
 	  called sun4i-gpadc-iio.
 
 config SUN20I_GPADC
-	tristate "Allwinner D1/T113s/T507/R329 and similar GPADCs driver"
+	tristate "Allwinner D1/T113s/T507/R329/A733 and similar GPADCs driver"
 	depends on ARCH_SUNXI || COMPILE_TEST
 	select IIO_ADC_HELPER
 	help
-	  Say yes here to build support for Allwinner (D1, T113, T507 and R329)
-	  SoCs GPADC. This ADC provides up to 16 channels.
+	  Say yes here to build support for Allwinner (D1, T113, T507, R329,
+	  A733 and similar) SoCs GPADC. This ADC provides up to 16 channels.
 
 	  To compile this driver as a module, choose M here: the module will be
 	  called sun20i-gpadc-iio.

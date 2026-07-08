@@ -65,3 +65,16 @@
 		skip;
 	};
 };
+
+&gpadc0 {
+	status = "okay";
+};
+
+&lradc {
+	status = "okay";
+	key_debounce;
+	debounce_value = <50>;
+	key_cnt = <1>;
+	key0 = <500 116>; /* voltage(mV), KEY_POWER — adjust per schematic */
+	filter-cnt = <3>;
+};

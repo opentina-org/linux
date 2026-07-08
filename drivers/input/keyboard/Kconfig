@@ -631,6 +631,18 @@ config KEYBOARD_SUN4I_LRADC
 	  To compile this driver as a module, choose M here: the
 	  module will be called sun4i-lradc-keys.
 
+config KEYBOARD_SUNXI_LRADC
+	tristate "Allwinner sunxi LRADC keyboard support"
+	depends on ARCH_SUNXI
+	select EXTCON
+	help
+	  Say Y here to enable the Allwinner LRADC keyboard driver used on
+	  newer sunxi SoCs such as A733. This driver supports the resistor
+	  ladder key matrix and optional headphone jack detection.
+
+	  To compile this driver as a module, choose M here: the module will
+	  be called sunxi-lradc-keys.
+
 config KEYBOARD_IPAQ_MICRO
 	tristate "Buttons on Micro SoC (iPaq h3100,h3600,h3700)"
 	depends on MFD_IPAQ_MICRO
