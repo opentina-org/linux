@@ -22,6 +22,9 @@
 
 	aliases {
 		gpadc0 = &gpadc0;
+		ir0 = &irrx;
+		ir1 = &s_irrx;
+		ir2 = &irtx;
 	};
 
 	cpus {
@@ -377,6 +380,49 @@
 			#interrupt-cells = <3>;
 		};
 
+		s_i2c0: i2c@7083000 {
+			compatible = "allwinner,sun6i-a31-i2c";
+			reg = <0x0 0x07083000 0x0 0x400>;
+			clocks = <&ccu CLK_R_TWI0>;
+			interrupts = <GIC_SPI 203 IRQ_TYPE_LEVEL_HIGH>;
+			resets = <&ccu RST_BUS_R_TWI0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
+		s_i2c1: i2c@7084000 {
+			compatible = "allwinner,sun6i-a31-i2c";
+			reg = <0x0 0x07084000 0x0 0x400>;
+			clocks = <&ccu CLK_R_TWI1>;
+			interrupts = <GIC_SPI 204 IRQ_TYPE_LEVEL_HIGH>;
+			resets = <&ccu RST_BUS_R_TWI1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
+		s_i2c2: i2c@7085000 {
+			compatible = "allwinner,sun6i-a31-i2c";
+			reg = <0x0 0x07085000 0x0 0x400>;
+			clocks = <&ccu CLK_R_TWI2>;
+			interrupts = <GIC_SPI 205 IRQ_TYPE_LEVEL_HIGH>;
+			resets = <&ccu RST_BUS_R_TWI2>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
+		s_irrx: irrx@7040000 {
+			compatible = "allwinner,irrx";
+			reg = <0x0 0x07040000 0x0 0x400>;
+			interrupts = <GIC_SPI 206 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&r_ccu CLK_R_BUS_IRRX>, <&ccu CLK_PLL_REF>, <&r_ccu CLK_R_IRRX>;
+			clock-names = "bus", "pclk", "mclk";
+			resets = <&r_ccu RST_BUS_R_IRRX>;
+			status = "disabled";
+		};
+
 		rtc_ccu: rtc_ccu@7090000 {
 			compatible = "allwinner,sun60iw2-rtc-ccu";
 			reg = <0x0 0x07090000 0x0 0x400>;
@@ -551,6 +597,26 @@
 			interrupts = <GIC_SPI 37 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&ccu CLK_LRADC>;
 			resets = <&ccu RST_BUS_LRADC>;
+			status = "disabled";
+		};
+
+		irtx: irtx@2525000 {
+			compatible = "allwinner,irtx";
+			reg = <0x0 0x02525000 0x0 0x400>;
+			interrupts = <GIC_SPI 31 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_IRTX_GATE>, <&sys24M>, <&ccu CLK_IRTX>;
+			clock-names = "bus", "pclk", "mclk";
+			resets = <&ccu RST_BUS_IRTX>;
+			status = "disabled";
+		};
+
+		irrx: irrx@2526000 {
+			compatible = "allwinner,irrx";
+			reg = <0x0 0x02526000 0x0 0x400>;
+			interrupts = <GIC_SPI 32 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_IRRX_GATE>, <&sys24M>, <&ccu CLK_IRRX>;
+			clock-names = "bus", "pclk", "mclk";
+			resets = <&ccu RST_BUS_IRRX>;
 			status = "disabled";
 		};
 

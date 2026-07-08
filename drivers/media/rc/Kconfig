@@ -377,13 +377,36 @@ config IR_STREAMZAP
 	   module will be called streamzap.
 
 config IR_SUNXI
-	tristate "SUNXI IR remote control"
+	tristate "SUNXI IR remote control (legacy)"
 	depends on ARCH_SUNXI || COMPILE_TEST
 	help
-	   Say Y if you want to use sunXi internal IR Controller
+	   Say Y if you want to use sunXi internal IR Controller on older
+	   Allwinner SoCs (sun4i/sun5i/sun6i compatible).
 
 	   To compile this driver as a module, choose M here: the module will
 	   be called sunxi-ir.
+
+config IR_SUNXI_RX
+	tristate "Allwinner sunxi IR receiver (irrx)"
+	depends on ARCH_SUNXI || COMPILE_TEST
+	depends on RC_CORE
+	help
+	   Say Y if you want to use the internal IR receiver on newer
+	   Allwinner SoCs such as A733 (allwinner,irrx compatible).
+
+	   To compile this driver as a module, choose M here: the module will
+	   be called sunxi-ir-rx.
+
+config IR_SUNXI_TX
+	tristate "Allwinner sunxi IR transmitter (irtx)"
+	depends on ARCH_SUNXI || COMPILE_TEST
+	depends on RC_CORE
+	help
+	   Say Y if you want to use the internal IR transmitter on newer
+	   Allwinner SoCs such as A733 (allwinner,irtx compatible).
+
+	   To compile this driver as a module, choose M here: the module will
+	   be called sunxi-ir-tx.
 
 config IR_TOY
 	tristate "Infrared Toy and IR Droid"

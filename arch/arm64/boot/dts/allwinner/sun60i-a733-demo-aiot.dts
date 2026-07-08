@@ -78,3 +78,9 @@
 	key0 = <500 116>; /* voltage(mV), KEY_POWER — adjust per schematic */
 	filter-cnt = <3>;
 };
+
+&irrx {
+	status = "okay";
+	ir_protocol_used = <0>; /* NEC */
+	linux,rc-map-name = "rc-map-sunxi";
+};
