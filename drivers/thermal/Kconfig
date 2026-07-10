@@ -354,7 +354,7 @@ config SUN8I_THERMAL
 	depends on RESET_CONTROLLER
 	help
 	  Support for the sun8i thermal sensor driver into the Linux thermal
-	  framework.
+	  framework, including Allwinner A733 (sun60iw2) SoCs.
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called sun8i-thermal.

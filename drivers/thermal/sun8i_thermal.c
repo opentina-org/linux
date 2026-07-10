@@ -15,6 +15,7 @@
 #include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/nvmem-consumer.h>
+#include <linux/nvmem-provider.h>
 #include <linux/of.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
@@ -25,7 +26,7 @@
 
 #include "thermal_hwmon.h"
 
-#define MAX_SENSOR_NUM	4
+#define MAX_SENSOR_NUM	8
 
 #define FT_TEMP_MASK				GENMASK(11, 0)
 #define TEMP_CALIB_MASK				GENMASK(11, 0)
@@ -48,6 +49,19 @@
 #define SUN50I_H6_THS_TEMP_CALIB		0xa0
 #define SUN50I_H6_THS_TEMP_DATA			0xc0
 
+#define SUN50I_H616_THS_CTRL0			0x00
+#define SUN50I_H616_THS_ENABLE			0x04
+#define SUN50I_H616_THS_PC			0x08
+#define SUN50I_H616_THS_DATA_INTS		0x20
+#define SUN50I_H616_THS_MFC			0x30
+#define SUN50I_H616_THS_TEMP_CALIB		0xa0
+#define SUN50I_H616_THS_TEMP_DATA		0xc0
+
+#define SUN60I_THS_CTRL0_T_ACQ(x)		(GENMASK(15, 0) & (x))
+#define SUN60I_THS_CTRL0_FS_DIV(x)		((GENMASK(15, 0) & (x)) << 16)
+#define SUN50I_H616_THS_PC_TEMP_PERIOD(x)	((GENMASK(19, 0) & (x)) << 12)
+#define SUN50I_H616_THS_DATA_IRQ_STS(x)		BIT(x)
+
 #define SUN8I_THS_CTRL0_T_ACQ0(x)		(GENMASK(15, 0) & (x))
 #define SUN8I_THS_CTRL2_T_ACQ1(x)		((GENMASK(15, 0) & (x)) << 16)
 #define SUN8I_THS_DATA_IRQ_STS(x)		BIT(x + 8)
@@ -68,6 +82,8 @@ struct tsensor {
 struct ths_thermal_chip {
 	bool            has_mod_clk;
 	bool            has_bus_clk_reset;
+	bool		has_gpadc_clk;
+	bool		check_data_ints;
 	bool		needs_sram;
 	int		sensor_num;
 	int		offset;
@@ -76,6 +92,7 @@ struct ths_thermal_chip {
 	int		temp_data_base;
 	int		(*calibrate)(struct ths_device *tmdev,
 				     u16 *caldata, int callen);
+	int		(*calibrate_soc)(struct ths_device *tmdev);
 	int		(*init)(struct ths_device *tmdev);
 	unsigned long	(*irq_ack)(struct ths_device *tmdev);
 	int		(*calc_temp)(struct ths_device *tmdev,
@@ -90,6 +107,7 @@ struct ths_device {
 	struct reset_control			*reset;
 	struct clk				*bus_clk;
 	struct clk                              *mod_clk;
+	struct clk				*gpadc_clk;
 	struct tsensor				sensor[MAX_SENSOR_NUM];
 };
 
@@ -118,13 +136,19 @@ static int sun8i_ths_get_temp(struct thermal_zone_device *tz, int *temp)
 {
 	struct tsensor *s = thermal_zone_device_priv(tz);
 	struct ths_device *tmdev = s->tmdev;
+	unsigned int data_ints = 0;
 	int val = 0;
 
 	regmap_read(tmdev->regmap, tmdev->chip->temp_data_base +
 		    0x4 * s->id, &val);
 
+	if (tmdev->chip->check_data_ints) {
+		regmap_read(tmdev->regmap, SUN50I_H616_THS_DATA_INTS, &data_ints);
+		data_ints &= BIT(s->id);
+	}
+
 	/* ths have no data yet */
-	if (!val)
+	if (!val || (tmdev->chip->check_data_ints && !data_ints))
 		return -EAGAIN;
 
 	*temp = tmdev->chip->calc_temp(tmdev, s->id, val);
@@ -413,9 +437,17 @@ static int sun8i_ths_resource_init(struct ths_device *tmdev)
 			return PTR_ERR(tmdev->mod_clk);
 	}
 
-	ret = clk_set_rate(tmdev->mod_clk, 24000000);
-	if (ret)
-		return ret;
+	if (tmdev->chip->has_gpadc_clk) {
+		tmdev->gpadc_clk = devm_clk_get_enabled(&pdev->dev, "gpadc");
+		if (IS_ERR(tmdev->gpadc_clk))
+			return PTR_ERR(tmdev->gpadc_clk);
+	}
+
+	if (tmdev->mod_clk) {
+		ret = clk_set_rate(tmdev->mod_clk, 24000000);
+		if (ret)
+			return ret;
+	}
 
 	if (tmdev->chip->needs_sram) {
 		struct regmap *regmap;
@@ -430,7 +462,10 @@ static int sun8i_ths_resource_init(struct ths_device *tmdev)
 			return PTR_ERR(tmdev->sram_regmap_field);
 	}
 
-	ret = sun8i_ths_calibrate(tmdev);
+	if (tmdev->chip->calibrate_soc)
+		ret = tmdev->chip->calibrate_soc(tmdev);
+	else
+		ret = sun8i_ths_calibrate(tmdev);
 	if (ret)
 		return ret;
 
@@ -570,8 +605,8 @@ static int sun8i_ths_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
+	irq = platform_get_irq_optional(pdev, 0);
+	if (irq == -EPROBE_DEFER)
 		return irq;
 
 	ret = tmdev->chip->init(tmdev);
@@ -582,16 +617,13 @@ static int sun8i_ths_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
-	/*
-	 * Avoid entering the interrupt handler, the thermal device is not
-	 * registered yet, we deffer the registration of the interrupt to
-	 * the end.
-	 */
-	ret = devm_request_threaded_irq(dev, irq, NULL,
-					sun8i_irq_thread,
-					IRQF_ONESHOT, "ths", tmdev);
-	if (ret)
-		return ret;
+	if (irq > 0) {
+		ret = devm_request_threaded_irq(dev, irq, NULL,
+						sun8i_irq_thread,
+						IRQF_ONESHOT, "ths", tmdev);
+		if (ret)
+			return ret;
+	}
 
 	return 0;
 }
@@ -695,6 +727,114 @@ static const struct ths_thermal_chip sun20i_d1_ths = {
 	.calc_temp = sun8i_ths_calc_temp,
 };
 
+#define SUN60IW2_SENSOR_DATA_CODE	1769
+#define SUN60IW2_OFFSET_BELOW		(-2822)
+#define SUN60IW2_SCALE_BELOW		(-62)
+#define SUN60IW2_OFFSET_ABOVE		(-2835)
+#define SUN60IW2_SCALE_ABOVE		(-59)
+#define SUN60IW2_THS_EFUSE_OFF0		0x44
+#define SUN60IW2_THS_EFUSE_OFF1		0x48
+#define SUN60IW2_THS_EFUSE_OFF2		0x4c
+
+static int sun60iw2_calc_temp(struct ths_device *tmdev, int id, int reg)
+{
+	if (reg > SUN60IW2_SENSOR_DATA_CODE)
+		return (reg + SUN60IW2_OFFSET_BELOW) * SUN60IW2_SCALE_BELOW;
+
+	return (reg + SUN60IW2_OFFSET_ABOVE) * SUN60IW2_SCALE_ABOVE;
+}
+
+static int sun60iw2_ths_calibrate(struct ths_device *tmdev)
+{
+	struct device_node *np __free(device_node) =
+		of_find_compatible_node(NULL, NULL, "allwinner,sun50i-a64-sid");
+	struct nvmem_device *nvmem;
+	struct device *dev = tmdev->dev;
+	u32 ths_cal[3];
+	int i, ft_temp, ret;
+
+	if (!np)
+		return 0;
+
+	nvmem = of_nvmem_device_get(np, NULL);
+	if (IS_ERR(nvmem)) {
+		if (PTR_ERR(nvmem) == -EPROBE_DEFER)
+			return -EPROBE_DEFER;
+		return 0;
+	}
+
+	ret = nvmem_device_read(nvmem, SUN60IW2_THS_EFUSE_OFF0, 4, &ths_cal[0]);
+	if (ret < 0)
+		return ret;
+	ret = nvmem_device_read(nvmem, SUN60IW2_THS_EFUSE_OFF1, 4, &ths_cal[1]);
+	if (ret < 0)
+		return ret;
+	ret = nvmem_device_read(nvmem, SUN60IW2_THS_EFUSE_OFF2, 4, &ths_cal[2]);
+	if (ret < 0)
+		return ret;
+
+	ft_temp = ths_cal[0] & FT_TEMP_MASK;
+	if (!ft_temp)
+		return 0;
+
+	for (i = 0; i < tmdev->chip->sensor_num; i++) {
+		int delta, cdata, offset, reg;
+
+		switch (i) {
+		case 0:
+			reg = (ths_cal[0] >> 12) & TEMP_CALIB_MASK;
+			break;
+		case 1:
+			reg = ((ths_cal[0] >> 24) | (ths_cal[1] << 8)) & TEMP_CALIB_MASK;
+			break;
+		case 2:
+			reg = (ths_cal[1] >> 4) & TEMP_CALIB_MASK;
+			break;
+		case 3:
+			reg = (ths_cal[1] >> 16) & TEMP_CALIB_MASK;
+			break;
+		case 4:
+			reg = ((ths_cal[1] >> 28) | (ths_cal[2] << 4)) & TEMP_CALIB_MASK;
+			break;
+		default:
+			return 0;
+		}
+
+		delta = (ft_temp * 100 - sun60iw2_calc_temp(tmdev, i, reg))
+			/ SUN60IW2_SCALE_BELOW;
+		cdata = CALIBRATE_DEFAULT - delta;
+		if (cdata & ~TEMP_CALIB_MASK) {
+			dev_warn(dev, "sensor%d is not calibrated\n", i);
+			continue;
+		}
+
+		offset = (i % 2) * 16;
+		regmap_update_bits(tmdev->regmap,
+				   SUN50I_H616_THS_TEMP_CALIB + (i / 2 * 4),
+				   TEMP_CALIB_MASK << offset,
+				   cdata << offset);
+	}
+
+	return 0;
+}
+
+static int sun60iw2_thermal_init(struct ths_device *tmdev)
+{
+	int val;
+
+	regmap_write(tmdev->regmap, SUN50I_H616_THS_CTRL0,
+		     SUN60I_THS_CTRL0_T_ACQ(47) | SUN60I_THS_CTRL0_FS_DIV(479));
+	regmap_write(tmdev->regmap, SUN50I_H616_THS_MFC,
+		     SUN50I_THS_FILTER_EN | SUN50I_THS_FILTER_TYPE(1));
+	regmap_write(tmdev->regmap, SUN50I_H616_THS_PC,
+		     SUN50I_H616_THS_PC_TEMP_PERIOD(28));
+	val = GENMASK(tmdev->chip->sensor_num - 1, 0);
+	regmap_write(tmdev->regmap, SUN50I_H616_THS_DATA_INTS, val);
+	regmap_write(tmdev->regmap, SUN50I_H616_THS_ENABLE, val);
+
+	return 0;
+}
+
 static const struct ths_thermal_chip sun50i_h616_ths = {
 	.sensor_num = 4,
 	.has_bus_clk_reset = true,
@@ -709,6 +849,17 @@ static const struct ths_thermal_chip sun50i_h616_ths = {
 	.calc_temp = sun8i_ths_calc_temp,
 };
 
+static const struct ths_thermal_chip sun60i_a733_ths = {
+	.sensor_num = 5,
+	.has_bus_clk_reset = true,
+	.has_gpadc_clk = true,
+	.check_data_ints = true,
+	.temp_data_base = SUN50I_H616_THS_TEMP_DATA,
+	.calibrate_soc = sun60iw2_ths_calibrate,
+	.init = sun60iw2_thermal_init,
+	.calc_temp = sun60iw2_calc_temp,
+};
+
 static const struct of_device_id of_ths_match[] = {
 	{ .compatible = "allwinner,sun8i-a83t-ths", .data = &sun8i_a83t_ths },
 	{ .compatible = "allwinner,sun8i-h3-ths", .data = &sun8i_h3_ths },
@@ -719,6 +870,7 @@ static const struct of_device_id of_ths_match[] = {
 	{ .compatible = "allwinner,sun50i-h6-ths", .data = &sun50i_h6_ths },
 	{ .compatible = "allwinner,sun20i-d1-ths", .data = &sun20i_d1_ths },
 	{ .compatible = "allwinner,sun50i-h616-ths", .data = &sun50i_h616_ths },
+	{ .compatible = "allwinner,sun60iw2p1-ths", .data = &sun60i_a733_ths },
 	{ /* sentinel */ },
 };
 MODULE_DEVICE_TABLE(of, of_ths_match);

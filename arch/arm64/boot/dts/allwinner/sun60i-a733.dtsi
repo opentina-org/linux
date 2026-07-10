@@ -11,6 +11,7 @@
 #include <dt-bindings/clock/sun60i-a733-r-ccu.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 #include <dt-bindings/reset/sun60i-a733-ccu.h>
+#include <dt-bindings/thermal/thermal.h>
 #include <dt-bindings/reset/sun60i-a733-r-ccu.h>
 
 / {
@@ -121,6 +122,93 @@
 
 				core1 {
 					cpu = <&cpu7>;
+				};
+			};
+		};
+	};
+
+	thermal-zones {
+		cpu-big-thermal {
+			polling-delay-passive = <100>;
+			polling-delay = <1000>;
+			thermal-sensors = <&ths 0>;
+
+			trips {
+				cpu_big_passive: trip-point@0 {
+					temperature = <70000>;
+					type = "passive";
+					hysteresis = <2000>;
+				};
+				cpu_big_critical: trip-point@1 {
+					temperature = <110000>;
+					type = "critical";
+					hysteresis = <0>;
+				};
+			};
+		};
+
+		ddr-thermal {
+			polling-delay-passive = <100>;
+			polling-delay = <1000>;
+			thermal-sensors = <&ths 1>;
+
+			trips {
+				ddr_critical: trip-point@0 {
+					temperature = <110000>;
+					type = "critical";
+					hysteresis = <0>;
+				};
+			};
+		};
+
+		npu-thermal {
+			polling-delay-passive = <100>;
+			polling-delay = <1000>;
+			thermal-sensors = <&ths 2>;
+
+			trips {
+				npu_critical: trip-point@0 {
+					temperature = <110000>;
+					type = "critical";
+					hysteresis = <0>;
+				};
+			};
+		};
+
+		cpu-little-thermal {
+			polling-delay-passive = <100>;
+			polling-delay = <1000>;
+			thermal-sensors = <&ths 3>;
+
+			trips {
+				cpu_little_passive: trip-point@0 {
+					temperature = <70000>;
+					type = "passive";
+					hysteresis = <2000>;
+				};
+				cpu_little_critical: trip-point@1 {
+					temperature = <110000>;
+					type = "critical";
+					hysteresis = <0>;
+				};
+			};
+		};
+
+		gpu-thermal {
+			polling-delay-passive = <100>;
+			polling-delay = <1000>;
+			thermal-sensors = <&ths 4>;
+
+			trips {
+				gpu_passive: trip-point@0 {
+					temperature = <60000>;
+					type = "passive";
+					hysteresis = <0>;
+				};
+				gpu_critical: trip-point@1 {
+					temperature = <110000>;
+					type = "critical";
+					hysteresis = <0>;
 				};
 			};
 		};
@@ -597,6 +685,16 @@
 			interrupts = <GIC_SPI 37 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&ccu CLK_LRADC>;
 			resets = <&ccu RST_BUS_LRADC>;
+			status = "disabled";
+		};
+
+		ths: ths@2522000 {
+			compatible = "allwinner,sun60iw2p1-ths";
+			reg = <0x0 0x02522000 0x0 0x500>;
+			clocks = <&ccu CLK_THS0>, <&ccu CLK_GPADC0_24M>;
+			clock-names = "bus", "gpadc";
+			resets = <&ccu RST_BUS_THS0>;
+			#thermal-sensor-cells = <1>;
 			status = "disabled";
 		};
 

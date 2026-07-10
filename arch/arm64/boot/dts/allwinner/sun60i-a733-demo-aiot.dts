@@ -79,6 +79,10 @@
 	filter-cnt = <3>;
 };
 
+&ths {
+	status = "okay";
+};
+
 &irrx {
 	status = "okay";
 	ir_protocol_used = <0>; /* NEC */
