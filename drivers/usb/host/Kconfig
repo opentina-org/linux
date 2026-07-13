@@ -311,6 +311,15 @@ config USB_EHCI_EXYNOS
 	  Enable support for the Samsung S5Pv210 and Exynos SOC's on-chip EHCI
 	  controller.
 
+config USB_SUN60I_HCD
+	tristate "Allwinner Sun60i (A733) USB host controller support"
+	depends on ARCH_SUNXI || COMPILE_TEST
+	depends on USB && OF && USB_OHCI_HCD
+	help
+	  Enable support for the Allwinner Sun60i (A733) on-chip EHCI/OHCI
+	  host controllers. This driver provides the platform-specific
+	  initialization required for proper USB operation with IOMMU.
+
 config USB_EHCI_MV
 	tristate "EHCI support for Marvell PXA/MMP USB controller"
 	depends on ARCH_PXA || ARCH_MMP || COMPILE_TEST
