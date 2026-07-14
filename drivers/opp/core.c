@@ -1939,6 +1939,21 @@ static bool _opp_supported_by_regulators(struct dev_pm_opp *opp,
 	for (i = 0; i < opp_table->regulator_count; i++) {
 		reg = opp_table->regulators[i];
 
+		/*
+		 * Allwinner multi-bin VF tables use 0uV to mark OPPs that are
+		 * invalid for the selected crystal/VF property. Treat that as
+		 * unsupported so they never enter the cpufreq table — otherwise
+		 * set_voltage(0,0) is clamped against min_uV and fails as
+		 * "unsupportable voltage range: min-0uV".
+		 */
+		if (!opp->supplies[i].u_volt &&
+		    !opp->supplies[i].u_volt_min &&
+		    !opp->supplies[i].u_volt_max) {
+			pr_debug("%s: skip 0uV OPP (%lu)\n", __func__,
+				 opp->rates[0]);
+			return false;
+		}
+
 		if (!regulator_is_supported_voltage(reg,
 					opp->supplies[i].u_volt_min,
 					opp->supplies[i].u_volt_max)) {
@@ -2093,8 +2108,8 @@ int _opp_add(struct device *dev, struct dev_pm_opp *new_opp,
 
 	if (!_opp_supported_by_regulators(new_opp, opp_table)) {
 		new_opp->available = false;
-		dev_warn(dev, "%s: OPP not supported by regulators (%lu)\n",
-			 __func__, new_opp->rates[0]);
+		dev_dbg(dev, "%s: OPP not supported by regulators (%lu)\n",
+			__func__, new_opp->rates[0]);
 	}
 
 	/* required-opps not fully initialized yet */

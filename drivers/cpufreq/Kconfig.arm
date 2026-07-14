@@ -15,6 +15,30 @@ config ARM_ALLWINNER_SUN50I_CPUFREQ_NVMEM
 	  To compile this driver as a module, choose M here: the
 	  module will be called sun50i-cpufreq-nvmem.
 
+config ARM_ALLWINNER_SUN60I_CPUFREQ_NVMEM
+	tristate "Allwinner nvmem based SUN60I CPUFreq driver"
+	depends on ARCH_SUNXI || COMPILE_TEST
+	depends on NVMEM_SUNXI_SID
+	select PM_OPP
+	help
+	  This adds the nvmem based CPUFreq driver for Allwinner
+	  A733 (sun60iw2) SoC.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called sun60i-cpufreq-nvmem.
+
+config ARM_ALLWINNER_SUNXI_DSUFREQ
+	tristate "Allwinner DSU frequency scaling"
+	depends on ARM_ALLWINNER_SUN60I_CPUFREQ_NVMEM
+	depends on CPUFREQ_DT
+	default ARM_ALLWINNER_SUN60I_CPUFREQ_NVMEM
+	help
+	  Scale the DynamIQ Shared Unit (DSU) clock alongside CPU
+	  frequency changes on Allwinner A733 (sun60iw2).
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called sunxi-dsufreq.
+
 config ARM_AIROHA_SOC_CPUFREQ
 	tristate "Airoha EN7581 SoC CPUFreq support"
 	depends on ARCH_AIROHA || COMPILE_TEST

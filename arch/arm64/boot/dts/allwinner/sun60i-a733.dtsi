@@ -7,12 +7,14 @@
 /dts-v1/;
 
 #include <dt-bindings/clock/sun60i-a733-ccu.h>
+#include <dt-bindings/clock/sun60i-a733-cpupll-ccu.h>
 #include <dt-bindings/clock/sun60i-a733-rtc.h>
 #include <dt-bindings/clock/sun60i-a733-r-ccu.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 #include <dt-bindings/reset/sun60i-a733-ccu.h>
 #include <dt-bindings/thermal/thermal.h>
 #include <dt-bindings/reset/sun60i-a733-r-ccu.h>
+#include "sun60i-a733-cpu-opp.dtsi"
 
 / {
 	compatible = "allwinner,a733";
@@ -28,6 +30,11 @@
 		ir2 = &irtx;
 	};
 
+	cpufreq {
+		compatible = "allwinner,sun60i-cpufreq-nvmem";
+		nvmem = <&sid>;
+	};
+
 	cpus {
 		#address-cells = <2>;
 		#size-cells = <0>;
@@ -37,6 +44,9 @@
 			compatible = "arm,cortex-a55";
 			reg = <0x0 0x0>;
 			enable-method = "psci";
+			clocks = <&cpupll_ccu CLK_PLL_CPU_L>;
+			operating-points-v2 = <&cluster0_opp_table>;
+			#cooling-cells = <2>;
 		};
 
 		cpu1: cpu@100 {
@@ -44,6 +54,9 @@
 			compatible = "arm,cortex-a55";
 			reg = <0x0 0x100>;
 			enable-method = "psci";
+			clocks = <&cpupll_ccu CLK_PLL_CPU_L>;
+			operating-points-v2 = <&cluster0_opp_table>;
+			#cooling-cells = <2>;
 		};
 
 		cpu2: cpu@200 {
@@ -51,6 +64,9 @@
 			compatible = "arm,cortex-a55";
 			reg = <0x0 0x200>;
 			enable-method = "psci";
+			clocks = <&cpupll_ccu CLK_PLL_CPU_L>;
+			operating-points-v2 = <&cluster0_opp_table>;
+			#cooling-cells = <2>;
 		};
 
 		cpu3: cpu@300 {
@@ -58,6 +74,9 @@
 			compatible = "arm,cortex-a55";
 			reg = <0x0 0x300>;
 			enable-method = "psci";
+			clocks = <&cpupll_ccu CLK_PLL_CPU_L>;
+			operating-points-v2 = <&cluster0_opp_table>;
+			#cooling-cells = <2>;
 		};
 
 		cpu4: cpu@400 {
@@ -65,6 +84,9 @@
 			compatible = "arm,cortex-a55";
 			reg = <0x0 0x400>;
 			enable-method = "psci";
+			clocks = <&cpupll_ccu CLK_PLL_CPU_L>;
+			operating-points-v2 = <&cluster0_opp_table>;
+			#cooling-cells = <2>;
 		};
 
 		cpu5: cpu@500 {
@@ -72,6 +94,9 @@
 			compatible = "arm,cortex-a55";
 			reg = <0x0 0x500>;
 			enable-method = "psci";
+			clocks = <&cpupll_ccu CLK_PLL_CPU_L>;
+			operating-points-v2 = <&cluster0_opp_table>;
+			#cooling-cells = <2>;
 		};
 
 		cpu6: cpu@600 {
@@ -79,6 +104,9 @@
 			compatible = "arm,cortex-a76";
 			reg = <0x0 0x600>;
 			enable-method = "psci";
+			clocks = <&cpupll_ccu CLK_PLL_CPU_B>;
+			operating-points-v2 = <&cluster1_opp_table>;
+			#cooling-cells = <2>;
 		};
 
 		cpu7: cpu@700 {
@@ -86,6 +114,9 @@
 			compatible = "arm,cortex-a76";
 			reg = <0x0 0x700>;
 			enable-method = "psci";
+			clocks = <&cpupll_ccu CLK_PLL_CPU_B>;
+			operating-points-v2 = <&cluster1_opp_table>;
+			#cooling-cells = <2>;
 		};
 
 		cpu-map {
@@ -139,10 +170,24 @@
 					type = "passive";
 					hysteresis = <2000>;
 				};
-				cpu_big_critical: trip-point@1 {
+				cpu_big_target: trip-point@1 {
+					temperature = <90000>;
+					type = "passive";
+					hysteresis = <2000>;
+				};
+				cpu_big_critical: trip-point@2 {
 					temperature = <110000>;
 					type = "critical";
 					hysteresis = <0>;
+				};
+			};
+
+			cooling-maps {
+				map0 {
+					trip = <&cpu_big_target>;
+					cooling-device =
+						<&cpu6 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+					contribution = <1024>;
 				};
 			};
 		};
@@ -186,10 +231,24 @@
 					type = "passive";
 					hysteresis = <2000>;
 				};
-				cpu_little_critical: trip-point@1 {
+				cpu_little_target: trip-point@1 {
+					temperature = <90000>;
+					type = "passive";
+					hysteresis = <2000>;
+				};
+				cpu_little_critical: trip-point@2 {
 					temperature = <110000>;
 					type = "critical";
 					hysteresis = <0>;
+				};
+			};
+
+			cooling-maps {
+				map0 {
+					trip = <&cpu_little_target>;
+					cooling-device =
+						<&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+					contribution = <1024>;
 				};
 			};
 		};
@@ -340,10 +399,44 @@
 			#reset-cells = <1>;
 		};
 
+		cpupll_ccu: cpupll_ccu@8870000 {
+			compatible = "allwinner,sun60iw2-cpupll";
+			reg = <0x0 0x08870000 0x0 0x3034>;
+			clocks = <&rtc_ccu CLK_DCXO>;
+			clock-names = "dcxo";
+			#clock-cells = <1>;
+		};
+
+		dsufreq: dsufreq@8860000 {
+			compatible = "allwinner,dsufreq";
+			reg = <0x0 0x08860000 0x0 0x1000>;
+			clocks = <&cpupll_ccu CLK_PLL_CPU_DSU>;
+			operating-points-v2 = <&dsu_opp_table>;
+		};
+
 		wdt: watchdog@2050000 {
 			compatible = "allwinner,sun55i-a523-wdt";
 			reg = <0x0 0x2050000 0x0 0x20>;
 			interrupts = <GIC_SPI 106 IRQ_TYPE_LEVEL_HIGH>;
+		};
+
+		sid: efuse@3006000 {
+			compatible = "allwinner,sunxi-sid", "allwinner,sun50i-a64-sid";
+			reg = <0x0 0x03006000 0x0 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			dvfs_word: dvfs@4c {
+				reg = <0x4c 4>;
+			};
+
+			ufs_cal_word_l: cal-word-l@60 {
+				reg = <0x60 4>;
+			};
+
+			ufs_cal_word_h: cal-word-h@64 {
+				reg = <0x64 4>;
+			};
 		};
 
 		mmu_aw: iommu@3900000 {

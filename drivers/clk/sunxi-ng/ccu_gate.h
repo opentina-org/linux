@@ -139,6 +139,12 @@ void ccu_gate_helper_disable(struct ccu_common *common, u32 gate);
 int ccu_gate_helper_enable(struct ccu_common *common, u32 gate);
 int ccu_gate_helper_is_enabled(struct ccu_common *common, u32 gate);
 
+void ccu_pll_gate_helper_disable(struct ccu_common *common, u32 gate,
+				 u32 output, u32 lock_enable, u32 ldo_en);
+int ccu_pll_gate_helper_enable(struct ccu_common *common, u32 gate,
+			       u32 output, u32 lock, u32 lock_enable,
+			       u32 ldo_en);
+
 extern const struct clk_ops ccu_gate_ops;
 
 #endif /* _CCU_GATE_H_ */

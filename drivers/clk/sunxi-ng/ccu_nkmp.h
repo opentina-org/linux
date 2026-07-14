@@ -18,8 +18,12 @@
  * Clocks based on the formula parent * N * K >> P / M
  */
 struct ccu_nkmp {
+	u32			output;
 	u32			enable;
 	u32			lock;
+	u32			lock_enable;
+	u32			ldo_en;
+	u16			p_reg;
 
 	struct ccu_mult_internal	n;
 	struct ccu_mult_internal	k;

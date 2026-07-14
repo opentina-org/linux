@@ -6,6 +6,7 @@
 
 #include <linux/clk-provider.h>
 #include <linux/io.h>
+#include <linux/iopoll.h>
 
 #include "ccu_gate.h"
 #include "ccu_nkmp.h"
@@ -16,6 +17,28 @@ struct _ccu_nkmp {
 	unsigned long	m, min_m, max_m;
 	unsigned long	p, min_p, max_p;
 };
+
+static u32 ccu_reg_get_field(void __iomem *base, u32 reg, u8 shift, u8 width)
+{
+	u32 val = readl(base + reg);
+	u32 mask = (1U << width) - 1;
+
+	return (val >> shift) & mask;
+}
+
+static void ccu_reg_set_field(void __iomem *base, u32 reg, u32 field,
+			      u8 shift, u8 width)
+{
+	u32 val = readl(base + reg);
+	u32 mask = ((1U << width) - 1) << shift;
+
+	writel((val & ~mask) | ((field << shift) & mask), base + reg);
+}
+
+static bool ccu_nkmp_use_pll_gate(struct ccu_nkmp *nkmp)
+{
+	return nkmp->output || nkmp->lock_enable || nkmp->ldo_en;
+}
 
 static unsigned long ccu_nkmp_calc_rate(unsigned long parent,
 					unsigned long n, unsigned long k,
@@ -73,12 +96,23 @@ static void ccu_nkmp_disable(struct clk_hw *hw)
 {
 	struct ccu_nkmp *nkmp = hw_to_ccu_nkmp(hw);
 
-	return ccu_gate_helper_disable(&nkmp->common, nkmp->enable);
+	if (ccu_nkmp_use_pll_gate(nkmp))
+		ccu_pll_gate_helper_disable(&nkmp->common, nkmp->enable,
+					    nkmp->output, nkmp->lock_enable,
+					    nkmp->ldo_en);
+	else
+		ccu_gate_helper_disable(&nkmp->common, nkmp->enable);
 }
 
 static int ccu_nkmp_enable(struct clk_hw *hw)
 {
 	struct ccu_nkmp *nkmp = hw_to_ccu_nkmp(hw);
+
+	if (ccu_nkmp_use_pll_gate(nkmp))
+		return ccu_pll_gate_helper_enable(&nkmp->common, nkmp->enable,
+						  nkmp->output, nkmp->lock,
+						  nkmp->lock_enable,
+						  nkmp->ldo_en);
 
 	return ccu_gate_helper_enable(&nkmp->common, nkmp->enable);
 }
@@ -116,6 +150,9 @@ static unsigned long ccu_nkmp_recalc_rate(struct clk_hw *hw,
 	m += nkmp->m.offset;
 	if (!m)
 		m++;
+
+	if (nkmp->p_reg)
+		reg = readl(nkmp->common.base + nkmp->p_reg);
 
 	p = reg >> nkmp->p.shift;
 	p &= (1 << nkmp->p.width) - 1;
@@ -168,7 +205,7 @@ static int ccu_nkmp_set_rate(struct clk_hw *hw, unsigned long rate,
 	u32 n_mask = 0, k_mask = 0, m_mask = 0, p_mask = 0;
 	struct _ccu_nkmp _nkmp;
 	unsigned long flags;
-	u32 reg;
+	u32 reg, back_p = 0, new_p = 0;
 
 	if (nkmp->common.features & CCU_FEATURE_FIXED_POSTDIV)
 		rate = rate * nkmp->fixed_post_div;
@@ -184,12 +221,6 @@ static int ccu_nkmp_set_rate(struct clk_hw *hw, unsigned long rate,
 
 	ccu_nkmp_find_best(parent_rate, rate, &_nkmp);
 
-	/*
-	 * If width is 0, GENMASK() macro may not generate expected mask (0)
-	 * as it falls under undefined behaviour by C standard due to shifts
-	 * which are equal or greater than width of left operand. This can
-	 * be easily avoided by explicitly checking if width is 0.
-	 */
 	if (nkmp->n.width)
 		n_mask = GENMASK(nkmp->n.width + nkmp->n.shift - 1,
 				 nkmp->n.shift);
@@ -211,9 +242,33 @@ static int ccu_nkmp_set_rate(struct clk_hw *hw, unsigned long rate,
 	reg |= ((_nkmp.n - nkmp->n.offset) << nkmp->n.shift) & n_mask;
 	reg |= ((_nkmp.k - nkmp->k.offset) << nkmp->k.shift) & k_mask;
 	reg |= ((_nkmp.m - nkmp->m.offset) << nkmp->m.shift) & m_mask;
-	reg |= (ilog2(_nkmp.p) << nkmp->p.shift) & p_mask;
 
-	writel(reg, nkmp->common.base + nkmp->common.reg);
+	if (!nkmp->p_reg) {
+		reg |= (ilog2(_nkmp.p) << nkmp->p.shift) & p_mask;
+		writel(reg, nkmp->common.base + nkmp->common.reg);
+	} else {
+		back_p = ccu_reg_get_field(nkmp->common.base, nkmp->p_reg,
+					   nkmp->p.shift, nkmp->p.width);
+		new_p = ilog2(_nkmp.p);
+		if (new_p > back_p)
+			ccu_reg_set_field(nkmp->common.base, nkmp->p_reg,
+					  new_p, nkmp->p.shift, nkmp->p.width);
+		writel(reg, nkmp->common.base + nkmp->common.reg);
+	}
+
+	if (nkmp->common.features & CCU_FEATURE_CLEAR_MOD && nkmp->common.clear) {
+		reg |= nkmp->common.clear;
+		writel(reg, nkmp->common.base + nkmp->common.reg);
+		WARN_ON(readl_relaxed_poll_timeout_atomic(nkmp->common.base +
+							  nkmp->common.reg,
+							  reg,
+							  !(reg & nkmp->common.clear),
+							  100, 10000));
+	}
+
+	if (nkmp->p_reg && new_p < back_p)
+		ccu_reg_set_field(nkmp->common.base, nkmp->p_reg, new_p,
+				  nkmp->p.shift, nkmp->p.width);
 
 	spin_unlock_irqrestore(nkmp->common.lock, flags);
 

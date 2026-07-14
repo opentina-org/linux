@@ -21,6 +21,7 @@
 #define CCU_FEATURE_CLOSEST_RATE	BIT(9)
 #define CCU_FEATURE_DUAL_DIV		BIT(10)
 #define CCU_FEATURE_UPDATE_BIT		BIT(11)
+#define CCU_FEATURE_CLEAR_MOD		BIT(12)
 
 /* MMC timing mode switch bit */
 #define CCU_MMC_NEW_TIMING_MODE		BIT(30)
@@ -34,6 +35,7 @@ struct ccu_common {
 	void __iomem	*base;
 	u16		reg;
 	u16		lock_reg;
+	u32		clear;
 	u32		prediv;
 	u32		key_value;
 

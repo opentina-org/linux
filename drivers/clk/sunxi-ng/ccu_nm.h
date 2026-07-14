@@ -20,8 +20,11 @@
  * Clocks based on the formula parent * N / M
  */
 struct ccu_nm {
+	u32			output;
 	u32			enable;
 	u32			lock;
+	u32			lock_enable;
+	u32			ldo_en;
 
 	struct ccu_mult_internal	n;
 	struct ccu_div_internal		m;

@@ -63,6 +63,85 @@ int ccu_gate_helper_enable(struct ccu_common *common, u32 gate)
 }
 EXPORT_SYMBOL_NS_GPL(ccu_gate_helper_enable, "SUNXI_CCU");
 
+void ccu_pll_gate_helper_disable(struct ccu_common *common, u32 gate,
+				 u32 output, u32 lock_enable, u32 ldo_en)
+{
+	unsigned long flags;
+	u32 reg;
+
+	if (!gate)
+		return;
+
+	spin_lock_irqsave(common->lock, flags);
+
+	if (output) {
+		reg = readl(common->base + common->reg);
+		writel(reg & ~output, common->base + common->reg);
+	}
+
+	if (lock_enable) {
+		reg = readl(common->base + common->reg);
+		writel(reg & ~lock_enable, common->base + common->reg);
+	}
+
+	spin_unlock_irqrestore(common->lock, flags);
+
+	ccu_gate_helper_disable(common, gate);
+
+	if (ldo_en) {
+		spin_lock_irqsave(common->lock, flags);
+		reg = readl(common->base + common->reg);
+		writel(reg & ~ldo_en, common->base + common->reg);
+		spin_unlock_irqrestore(common->lock, flags);
+	}
+}
+EXPORT_SYMBOL_NS_GPL(ccu_pll_gate_helper_disable, "SUNXI_CCU");
+
+int ccu_pll_gate_helper_enable(struct ccu_common *common, u32 gate,
+			       u32 output, u32 lock, u32 lock_enable,
+			       u32 ldo_en)
+{
+	unsigned long flags;
+	u32 reg;
+	int ret;
+
+	if (!gate)
+		return 0;
+
+	spin_lock_irqsave(common->lock, flags);
+
+	if (ldo_en) {
+		reg = readl(common->base + common->reg);
+		writel(reg | ldo_en, common->base + common->reg);
+	}
+
+	spin_unlock_irqrestore(common->lock, flags);
+
+	ret = ccu_gate_helper_enable(common, gate);
+	if (ret)
+		return ret;
+
+	spin_lock_irqsave(common->lock, flags);
+
+	if (lock_enable) {
+		reg = readl(common->base + common->reg);
+		writel(reg | lock_enable, common->base + common->reg);
+	}
+
+	if (output) {
+		reg = readl(common->base + common->reg);
+		writel(reg | output, common->base + common->reg);
+	}
+
+	spin_unlock_irqrestore(common->lock, flags);
+
+	if (lock)
+		ccu_helper_wait_for_lock(common, lock);
+
+	return 0;
+}
+EXPORT_SYMBOL_NS_GPL(ccu_pll_gate_helper_enable, "SUNXI_CCU");
+
 static int ccu_gate_enable(struct clk_hw *hw)
 {
 	struct ccu_gate *cg = hw_to_ccu_gate(hw);

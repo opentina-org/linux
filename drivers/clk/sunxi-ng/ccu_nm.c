@@ -57,12 +57,22 @@ static void ccu_nm_disable(struct clk_hw *hw)
 {
 	struct ccu_nm *nm = hw_to_ccu_nm(hw);
 
-	return ccu_gate_helper_disable(&nm->common, nm->enable);
+	if (nm->output || nm->lock_enable || nm->ldo_en)
+		ccu_pll_gate_helper_disable(&nm->common, nm->enable,
+					    nm->output, nm->lock_enable,
+					    nm->ldo_en);
+	else
+		ccu_gate_helper_disable(&nm->common, nm->enable);
 }
 
 static int ccu_nm_enable(struct clk_hw *hw)
 {
 	struct ccu_nm *nm = hw_to_ccu_nm(hw);
+
+	if (nm->output || nm->lock_enable || nm->ldo_en)
+		return ccu_pll_gate_helper_enable(&nm->common, nm->enable,
+						  nm->output, nm->lock,
+						  nm->lock_enable, nm->ldo_en);
 
 	return ccu_gate_helper_enable(&nm->common, nm->enable);
 }

@@ -19,6 +19,13 @@
 		stdout-path = "serial0:115200n8";
 	};
 
+	reg_5v: regulator-5v0 {
+		compatible = "regulator-fixed";
+		regulator-name = "VCC5V0_SYS";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+	};
+
 	reg_3v3: regulator-fixed-3v3 {
 		compatible = "regulator-fixed";
 		regulator-name = "fixed-3v3";
@@ -27,12 +34,147 @@
 	};
 };
 
+&pio {
+	uart0_pins: uart0_pins {
+		pins = "PB9", "PB10";
+		function = "uart0";
+		drive-strength = <10>;
+	};
+};
+
+&r_pio {
+	s_i2c0_pins: s_i2c0_pins {
+		pins = "PL0", "PL1";
+		function = "s_twi0";
+		drive-strength = <10>;
+	};
+};
+
+&s_i2c0 {
+	pinctrl-0 = <&s_i2c0_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	axp318: pmic@36 {
+		compatible = "x-powers,axp318w";
+		reg = <0x36>;
+		#interrupt-cells = <1>;
+		interrupt-controller;
+
+		vin19-supply = <&reg_5v>;
+		vin23-supply = <&reg_5v>;
+		vin45-supply = <&reg_5v>;
+		vin678-supply = <&reg_5v>;
+		dldoin-supply = <&reg_5v>;
+		cldoin-supply = <&reg_5v>;
+		swin-supply = <&reg_5v>;
+
+		regulators {
+			/* System fabric */
+			reg_dcdc2: dcdc2 {
+				regulator-name = "vdd-sys";
+				regulator-min-microvolt = <800000>;
+				regulator-max-microvolt = <800000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			/* A76 / big cluster */
+			reg_dcdc3: dcdc3 {
+				regulator-name = "vdd-cpub";
+				regulator-min-microvolt = <800000>;
+				regulator-max-microvolt = <1100000>;
+				regulator-ramp-delay = <25000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			/* A55 / little cluster */
+			reg_dcdc5: dcdc5 {
+				regulator-name = "vdd-cpul";
+				regulator-min-microvolt = <800000>;
+				regulator-max-microvolt = <1100000>;
+				regulator-ramp-delay = <25000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			cldo5: cldo5 {
+				regulator-name = "cldo5";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			swout2: swout2 {
+				regulator-name = "swout2";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			dcdc8: dcdc8 {
+				regulator-name = "dcdc8";
+				regulator-min-microvolt = <1200000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			dldo6: dldo6 {
+				regulator-name = "dldo6";
+				regulator-min-microvolt = <2500000>;
+				regulator-max-microvolt = <2500000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+		};
+	};
+};
+
+/* Little cluster (A55): AXP318 DCDC5 */
+&cpu0 {
+	cpu-supply = <&reg_dcdc5>;
+};
+
+&cpu1 {
+	cpu-supply = <&reg_dcdc5>;
+};
+
+&cpu2 {
+	cpu-supply = <&reg_dcdc5>;
+};
+
+&cpu3 {
+	cpu-supply = <&reg_dcdc5>;
+};
+
+&cpu4 {
+	cpu-supply = <&reg_dcdc5>;
+};
+
+&cpu5 {
+	cpu-supply = <&reg_dcdc5>;
+};
+
+/* Big cluster (A76): AXP318 DCDC3 */
+&cpu6 {
+	cpu-supply = <&reg_dcdc3>;
+};
+
+&cpu7 {
+	cpu-supply = <&reg_dcdc3>;
+};
+
 &mmc0 {
 	/* Missing v(q)mmc-supply which is SWOUT2/CLDO3 of AXP318 */
 	bus-width = <4>;
 	disable-wp;
 	cd-gpios = <&pio 5 6 GPIO_ACTIVE_LOW>;
-	vmmc-supply = <&reg_3v3>;
+	vmmc-supply = <&swout2>;
+	vqmmc-supply = <&cldo5>;
 	status = "okay";
 };
 

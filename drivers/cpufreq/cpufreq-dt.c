@@ -23,6 +23,7 @@
 #include <linux/thermal.h>
 
 #include "cpufreq-dt.h"
+#include "sunxi-dsufreq.h"
 
 struct private_data {
 	struct list_head node;
@@ -35,6 +36,22 @@ struct private_data {
 };
 
 static LIST_HEAD(priv_list);
+
+static DEFINE_MUTEX(set_dsufreq_mutex);
+static int (*dsufreq_scaling_down_cb)(struct cpufreq_policy *, unsigned long);
+static int (*dsufreq_scaling_up_cb)(struct cpufreq_policy *, unsigned long, int);
+
+void sunxi_set_dsufreq_cb(int (*scaling_down_cb)(struct cpufreq_policy *,
+						 unsigned long),
+			  int (*scaling_up_cb)(struct cpufreq_policy *,
+					       unsigned long, int))
+{
+	mutex_lock(&set_dsufreq_mutex);
+	dsufreq_scaling_down_cb = scaling_down_cb;
+	dsufreq_scaling_up_cb = scaling_up_cb;
+	mutex_unlock(&set_dsufreq_mutex);
+}
+EXPORT_SYMBOL_GPL(sunxi_set_dsufreq_cb);
 
 static struct private_data *cpufreq_dt_find_data(int cpu)
 {
@@ -52,8 +69,21 @@ static int set_target(struct cpufreq_policy *policy, unsigned int index)
 {
 	struct private_data *priv = policy->driver_data;
 	unsigned long freq = policy->freq_table[index].frequency;
+	int ret;
 
-	return dev_pm_opp_set_rate(priv->cpu_dev, freq * 1000);
+	mutex_lock(&set_dsufreq_mutex);
+
+	if (dsufreq_scaling_down_cb)
+		dsufreq_scaling_down_cb(policy, freq * 1000);
+
+	ret = dev_pm_opp_set_rate(priv->cpu_dev, freq * 1000);
+
+	if (dsufreq_scaling_up_cb)
+		dsufreq_scaling_up_cb(policy, freq * 1000, ret);
+
+	mutex_unlock(&set_dsufreq_mutex);
+
+	return ret;
 }
 
 /*
