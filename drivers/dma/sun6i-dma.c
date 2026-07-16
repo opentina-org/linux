@@ -92,6 +92,16 @@
 
 #define DMA_CHAN_CUR_PARA	0x1c
 
+/* Per-channel IRQ registers (v102+ layout, relative to channel base) */
+#define DMA_CHAN_IRQ_EN_REG	0x34
+#define DMA_CHAN_IRQ_STAT_REG	0x38
+
+/* Global CPU/MCU IRQ routing registers (multicore DMA controllers) */
+#define DMA_IRQ_CPU_EN_REG	0x34
+#define DMA_IRQ_MCU_EN_REG	0x38
+#define DMA_IRQ_CPU_EN_MASK	0xFF
+#define DMA_IRQ_MCU_DIS_MASK	0xFF00
+
 /*
  * LLI address mangling
  *
@@ -144,6 +154,8 @@ struct sun6i_dma_config {
 	u32 dst_addr_widths;
 	bool has_high_addr;
 	bool has_mbus_clk;
+	bool has_per_chan_irq;
+	bool has_multicore_shared;
 };
 
 /*
@@ -437,7 +449,6 @@ static int sun6i_dma_start_desc(struct sun6i_vchan *vchan)
 	struct sun6i_dma_dev *sdev = to_sun6i_dma_dev(vchan->vc.chan.device);
 	struct virt_dma_desc *desc = vchan_next_desc(&vchan->vc);
 	struct sun6i_pchan *pchan = vchan->phy;
-	u32 irq_val, irq_reg, irq_offset;
 
 	if (!pchan)
 		return -EAGAIN;
@@ -455,16 +466,23 @@ static int sun6i_dma_start_desc(struct sun6i_vchan *vchan)
 
 	sun6i_dma_dump_lli(vchan, pchan->desc->v_lli, pchan->desc->p_lli);
 
-	irq_reg = pchan->idx / DMA_IRQ_CHAN_NR;
-	irq_offset = pchan->idx % DMA_IRQ_CHAN_NR;
-
 	vchan->irq_type = vchan->cyclic ? DMA_IRQ_PKG : DMA_IRQ_QUEUE;
 
-	irq_val = readl(sdev->base + DMA_IRQ_EN(irq_reg));
-	irq_val &= ~((DMA_IRQ_HALF | DMA_IRQ_PKG | DMA_IRQ_QUEUE) <<
-			(irq_offset * DMA_IRQ_CHAN_WIDTH));
-	irq_val |= vchan->irq_type << (irq_offset * DMA_IRQ_CHAN_WIDTH);
-	writel(irq_val, sdev->base + DMA_IRQ_EN(irq_reg));
+	if (sdev->cfg->has_per_chan_irq) {
+		writel(vchan->irq_type,
+		       pchan->base + DMA_CHAN_IRQ_EN_REG);
+	} else {
+		u32 irq_val, irq_reg, irq_offset;
+
+		irq_reg = pchan->idx / DMA_IRQ_CHAN_NR;
+		irq_offset = pchan->idx % DMA_IRQ_CHAN_NR;
+
+		irq_val = readl(sdev->base + DMA_IRQ_EN(irq_reg));
+		irq_val &= ~((DMA_IRQ_HALF | DMA_IRQ_PKG | DMA_IRQ_QUEUE) <<
+				(irq_offset * DMA_IRQ_CHAN_WIDTH));
+		irq_val |= vchan->irq_type << (irq_offset * DMA_IRQ_CHAN_WIDTH);
+		writel(irq_val, sdev->base + DMA_IRQ_EN(irq_reg));
+	}
 
 	writel(pchan->desc->p_lli, pchan->base + DMA_CHAN_LLI_ADDR);
 	writel(DMA_CHAN_ENABLE_START, pchan->base + DMA_CHAN_ENABLE);
@@ -547,6 +565,35 @@ static irqreturn_t sun6i_dma_interrupt(int irq, void *dev_id)
 	struct sun6i_pchan *pchan;
 	int i, j, ret = IRQ_NONE;
 	u32 status;
+
+	if (sdev->cfg->has_per_chan_irq) {
+		for (i = 0; i < sdev->num_pchans; i++) {
+			pchan = &sdev->pchans[i];
+			status = readl(pchan->base + DMA_CHAN_IRQ_STAT_REG);
+			if (!status)
+				continue;
+
+			writel(status, pchan->base + DMA_CHAN_IRQ_STAT_REG);
+
+			vchan = pchan->vchan;
+			if (vchan && (status & vchan->irq_type)) {
+				if (vchan->cyclic) {
+					vchan_cyclic_callback(&pchan->desc->vd);
+				} else {
+					spin_lock(&vchan->vc.lock);
+					vchan_cookie_complete(&pchan->desc->vd);
+					pchan->done = pchan->desc;
+					spin_unlock(&vchan->vc.lock);
+				}
+			}
+
+			if (!atomic_read(&sdev->tasklet_shutdown))
+				tasklet_schedule(&sdev->task);
+			ret = IRQ_HANDLED;
+		}
+
+		return ret;
+	}
 
 	for (i = 0; i < sdev->num_pchans / DMA_IRQ_CHAN_NR; i++) {
 		status = readl(sdev->base + DMA_IRQ_STAT(i));
@@ -1052,8 +1099,15 @@ static struct dma_chan *sun6i_dma_of_xlate(struct of_phandle_args *dma_spec,
 static inline void sun6i_kill_tasklet(struct sun6i_dma_dev *sdev)
 {
 	/* Disable all interrupts from DMA */
-	writel(0, sdev->base + DMA_IRQ_EN(0));
-	writel(0, sdev->base + DMA_IRQ_EN(1));
+	if (sdev->cfg->has_per_chan_irq) {
+		int i;
+
+		for (i = 0; i < sdev->num_pchans; i++)
+			writel(0, sdev->pchans[i].base + DMA_CHAN_IRQ_EN_REG);
+	} else {
+		writel(0, sdev->base + DMA_IRQ_EN(0));
+		writel(0, sdev->base + DMA_IRQ_EN(1));
+	}
 
 	/* Prevent spurious interrupts from scheduling the tasklet */
 	atomic_inc(&sdev->tasklet_shutdown);
@@ -1245,6 +1299,29 @@ static struct sun6i_dma_config sun50i_h6_dma_cfg = {
 };
 
 /*
+ * The A733 (sun60iw2) uses a DMA controller with per-channel IRQ registers
+ * (v102+ style) instead of the shared IRQ registers used by H6/A100.
+ * IRQ enable/status at channel_base + 0x34/0x38 instead of global 0x00/0x10.
+ */
+static struct sun6i_dma_config sun60i_a733_dma_cfg = {
+	.clock_autogate_enable = sun6i_enable_clock_autogate_h3,
+	.set_burst_length = sun6i_set_burst_length_h3,
+	.set_drq          = sun6i_set_drq_h6,
+	.set_mode         = sun6i_set_mode_h6,
+	.src_burst_lengths = BIT(1) | BIT(4) | BIT(8) | BIT(16),
+	.dst_burst_lengths = BIT(1) | BIT(4) | BIT(8) | BIT(16),
+	.src_addr_widths   = BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) |
+			     BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) |
+			     BIT(DMA_SLAVE_BUSWIDTH_4_BYTES),
+	.dst_addr_widths   = BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) |
+			     BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) |
+			     BIT(DMA_SLAVE_BUSWIDTH_4_BYTES),
+	.has_mbus_clk = true,
+	.has_per_chan_irq = true,
+	.has_multicore_shared = true,
+};
+
+/*
  * The V3s have only 8 physical channels, a maximum DRQ port id of 23,
  * and a total of 24 usable source and destination endpoints.
  */
@@ -1277,6 +1354,7 @@ static const struct of_device_id sun6i_dma_match[] = {
 	{ .compatible = "allwinner,sun50i-a64-dma", .data = &sun50i_a64_dma_cfg },
 	{ .compatible = "allwinner,sun50i-a100-dma", .data = &sun50i_a100_dma_cfg },
 	{ .compatible = "allwinner,sun50i-h6-dma", .data = &sun50i_h6_dma_cfg },
+	{ .compatible = "allwinner,sun60i-a733-dma", .data = &sun60i_a733_dma_cfg },
 	{ /* sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, sun6i_dma_match);
@@ -1453,6 +1531,11 @@ static int sun6i_dma_probe(struct platform_device *pdev)
 
 	if (sdc->cfg->clock_autogate_enable)
 		sdc->cfg->clock_autogate_enable(sdc);
+
+	if (sdc->cfg->has_multicore_shared) {
+		writel(DMA_IRQ_CPU_EN_MASK, sdc->base + DMA_IRQ_CPU_EN_REG);
+		writel(DMA_IRQ_MCU_DIS_MASK, sdc->base + DMA_IRQ_MCU_EN_REG);
+	}
 
 	return 0;
 

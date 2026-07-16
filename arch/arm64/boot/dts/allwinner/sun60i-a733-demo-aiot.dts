@@ -33,15 +33,6 @@
 		regulator-max-microvolt = <3300000>;
 	};
 
-	/*
-	 * Placeholder codec DAI for I2S bring-up (no external codec wired yet).
-	 * Replace with a real codec when available; enough for /dev/snd and aplay -l.
-	 */
-	spdif_dit0: spdif-transmitter {
-		compatible = "linux,spdif-dit";
-		#sound-dai-cells = <0>;
-	};
-
 	sound_i2s0: sound {
 		compatible = "simple-audio-card";
 		simple-audio-card,name = "sunxi-i2s0";
@@ -55,7 +46,26 @@
 		};
 
 		simple-audio-card,codec {
-			sound-dai = <&spdif_dit0>;
+			sound-dai = <&codec>;
+		};
+	};
+
+	dmic_codec: dmic-codec {
+		compatible = "dmic-codec";
+		#sound-dai-cells = <0>;
+		num-channels = <2>;
+	};
+
+	sound_dmic: sound-dmic {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "sunxi-dmic";
+
+		simple-audio-card,cpu {
+			sound-dai = <&dmic>;
+		};
+
+		simple-audio-card,codec {
+			sound-dai = <&dmic_codec>;
 		};
 	};
 };
@@ -267,6 +277,16 @@
 	status = "okay";
 	ir_protocol_used = <0>; /* NEC */
 	linux,rc-map-name = "rc-map-sunxi";
+};
+
+&codec {
+	status = "okay";
+};
+
+&dmic {
+	pinctrl-names = "default";
+	pinctrl-0 = <&dmic_pins>;
+	status = "okay";
 };
 
 &i2s0 {

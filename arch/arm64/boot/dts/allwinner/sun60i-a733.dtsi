@@ -428,6 +428,18 @@
 				function = "i2s0_din0";
 				allwinner,pinmux = <3>;
 			};
+
+			/*
+			 * DMIC on PG10-PG14 (func dmic).  Prefer this mux over
+			 * PH8-PH12, which conflicts with RGMII0 on this SoC.
+			 * Pin map: CLK, DATA0, DATA1, DATA2, DATA3.
+			 */
+			/omit-if-no-ref/
+			dmic_pins: dmic-pins {
+				pins = "PG10", "PG11", "PG12", "PG13", "PG14";
+				function = "dmic";
+				allwinner,pinmux = <6>;
+			};
 		};
 
 		ccu: ccu@2002000 {
@@ -840,7 +852,7 @@
 		};
 
 		dma: dma-controller@4601000 {
-			compatible = "allwinner,sun50i-h6-dma";
+			compatible = "allwinner,sun60i-a733-dma";
 			reg = <0x0 0x04601000 0x0 0x2000>;
 			interrupts = <GIC_SPI 111 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&ccu CLK_DMA0>, <&ccu CLK_MBUS_DMA0>;
@@ -918,6 +930,39 @@
 			resets = <&ccu RST_BUS_I2SPCM4>;
 			dmas = <&dma 7>, <&dma 7>;
 			dma-names = "rx", "tx";
+			status = "disabled";
+		};
+
+		codec: codec@2530000 {
+			compatible = "allwinner,sun60i-a733-codec";
+			#sound-dai-cells = <0>;
+			status = "disabled";
+		};
+
+		dmic: dmic@2531000 {
+			compatible = "allwinner,sun60i-a733-dmic",
+				     "allwinner,sun50i-h6-dmic";
+			reg = <0x0 0x02531000 0x0 0x400>;
+			#sound-dai-cells = <0>;
+			clocks = <&ccu CLK_BUS_DMIC>, <&ccu CLK_DMIC>;
+			clock-names = "bus", "mod";
+			resets = <&ccu RST_BUS_DMIC>;
+			dmas = <&dma 9>;
+			dma-names = "rx";
+			status = "disabled";
+		};
+
+		owa: owa@2537000 {
+			compatible = "allwinner,sun60i-a733-spdif",
+				     "allwinner,sun50i-h6-spdif";
+			reg = <0x0 0x02537000 0x0 0x400>;
+			#sound-dai-cells = <0>;
+			clocks = <&ccu CLK_BUS_OWA>, <&ccu CLK_OWA_TX>,
+				 <&ccu CLK_OWA_RX>;
+			clock-names = "apb", "spdif-tx", "spdif-rx";
+			resets = <&ccu RST_BUS_OWA>;
+			dmas = <&dma 2>, <&dma 2>;
+			dma-names = "tx", "rx";
 			status = "disabled";
 		};
 

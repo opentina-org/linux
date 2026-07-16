@@ -63,6 +63,16 @@ config SND_SUN50I_DMIC
 	  Say Y or M to add support for the DMIC audio block in the Allwinner
 	  H6 and affiliated SoCs.
 
+config SND_SUN60I_A733_CODEC
+	tristate "Allwinner A733 Codec Support"
+	depends on (ARM64 && ARCH_SUNXI) || COMPILE_TEST
+	help
+	  Say Y or M to add support for the codec on the Allwinner A733
+	  (sun60iw2) SoC.  The A733 does not contain an internal analog
+	  codec; this driver provides a minimal digital codec component
+	  so that the on-chip I2S controllers can be bound via
+	  simple-audio-card or an audio-graph card.
+
 config SND_SUN8I_ADDA_PR_REGMAP
 	tristate
 	select REGMAP

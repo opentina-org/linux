@@ -1393,7 +1393,7 @@ static SUNXI_CCU_M_WITH_MUX_GATE(i2spcm0_clk, "i2spcm0",
 		0, 5,	/* M */
 		24, 3,	/* mux */
 		BIT(31),	/* gate */
-		CLK_SET_RATE_NO_REPARENT | CLK_SET_RATE_PARENT);
+		CLK_SET_RATE_PARENT);
 
 static SUNXI_CCU_GATE(i2spcm0_bus_clk, "i2spcm0-bus",
 		"apb0",
@@ -1404,7 +1404,7 @@ static SUNXI_CCU_M_WITH_MUX_GATE(i2spcm1_clk, "i2spcm1",
 		0, 5,	/* M */
 		24, 3,	/* mux */
 		BIT(31),	/* gate */
-		CLK_SET_RATE_NO_REPARENT | CLK_SET_RATE_PARENT);
+		CLK_SET_RATE_PARENT);
 
 static SUNXI_CCU_GATE(i2spcm1_bus_clk, "i2spcm1-bus",
 		"apb0",
@@ -1415,7 +1415,7 @@ static SUNXI_CCU_M_WITH_MUX_GATE(i2spcm2_clk, "i2spcm2",
 		0, 5,	/* M */
 		24, 3,	/* mux */
 		BIT(31),	/* gate */
-		CLK_SET_RATE_NO_REPARENT | CLK_SET_RATE_PARENT);
+		CLK_SET_RATE_PARENT);
 
 static const char * const i2spcm2_asrc_parents[] = { "pll-audio0-4x", "pll-audio1-div2", "pll-audio1-div5", "pll-peri0-300m", "pll-peri1-300m" };
 
@@ -1424,7 +1424,7 @@ static SUNXI_CCU_M_WITH_MUX_GATE(i2spcm2_asrc_clk, "i2spcm2-asrc",
 		0, 5,	/* M */
 		24, 3,	/* mux */
 		BIT(31),	/* gate */
-		CLK_SET_RATE_NO_REPARENT | CLK_SET_RATE_PARENT);
+		CLK_SET_RATE_PARENT);
 
 static SUNXI_CCU_GATE(i2spcm2_bus_clk, "i2spcm2-bus",
 		"apb0",
@@ -1437,7 +1437,7 @@ static SUNXI_CCU_M_WITH_MUX_GATE(i2spcm3_clk, "i2spcm3",
 		0, 5,	/* M */
 		24, 3,	/* mux */
 		BIT(31),	/* gate */
-		CLK_SET_RATE_NO_REPARENT | CLK_SET_RATE_PARENT);
+		CLK_SET_RATE_PARENT);
 
 static SUNXI_CCU_GATE(i2spcm3_bus_clk, "i2spcm3-bus",
 		"apb0",
@@ -1448,7 +1448,7 @@ static SUNXI_CCU_M_WITH_MUX_GATE(i2spcm4_clk, "i2spcm4",
 		0, 5,	/* M */
 		24, 3,	/* mux */
 		BIT(31),	/* gate */
-		CLK_SET_RATE_NO_REPARENT | CLK_SET_RATE_PARENT);
+		CLK_SET_RATE_PARENT);
 
 static SUNXI_CCU_GATE(i2spcm4_bus_clk, "i2spcm4-bus",
 		"apb0",
@@ -1461,7 +1461,7 @@ static SUNXI_CCU_M_WITH_MUX_GATE(owa_tx_clk, "owa-tx",
 		0, 5,	/* M */
 		24, 3,	/* mux */
 		BIT(31),	/* gate */
-		CLK_SET_RATE_NO_REPARENT | CLK_SET_RATE_PARENT);
+		CLK_SET_RATE_PARENT);
 
 static const char * const owa_rx_parents[] = { "pll-peri0-200m", "pll-peri0-300m", "pll-peri0-400m" };
 
@@ -1483,7 +1483,7 @@ static SUNXI_CCU_M_WITH_MUX_GATE(dmic_clk, "dmic",
 		0, 5,	/* M */
 		24, 3,	/* mux */
 		BIT(31),	/* gate */
-		CLK_SET_RATE_NO_REPARENT | CLK_SET_RATE_PARENT);
+		CLK_SET_RATE_PARENT);
 
 static SUNXI_CCU_GATE(dmic_bus_clk, "dmic-bus",
 		"apb0",

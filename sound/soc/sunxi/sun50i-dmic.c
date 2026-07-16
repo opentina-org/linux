@@ -5,6 +5,7 @@
 // Copyright 2021 Ban Tao <fengzheng923@gmail.com>
 
 #include <linux/clk.h>
+#include <linux/clk-provider.h>
 #include <linux/device.h>
 #include <linux/mod_devicetable.h>
 #include <linux/module.h>
@@ -160,6 +161,28 @@ static int sun50i_dmic_hw_params(struct snd_pcm_substream *substream,
 		return -EINVAL;
 	}
 
+	/*
+	 * A733 (and similar) DMIC mux parents:
+	 *   0: pll-audio0-4x  — 44.1 kHz family
+	 *   2: pll-audio1-div5 — 48 kHz family
+	 * Match vendor snd_sun60iw2_dmic and sun4i-i2s reparent logic.
+	 */
+	{
+		struct clk_hw *hw = __clk_get_hw(host->dmic_clk);
+		struct clk_hw *parent;
+		struct clk *pclk;
+		unsigned int index = (mclk == 22579200) ? 0 : 2;
+
+		parent = clk_hw_get_parent_by_index(hw, index);
+		if (parent) {
+			pclk = clk_hw_get_clk(parent, NULL);
+			if (!IS_ERR(pclk)) {
+				clk_set_parent(host->dmic_clk, pclk);
+				clk_put(pclk);
+			}
+		}
+	}
+
 	if (clk_set_rate(host->dmic_clk, mclk)) {
 		dev_err(cpu_dai->dev, "mclk : %u not support\n", mclk);
 		return -EINVAL;
@@ -173,6 +196,10 @@ static int sun50i_dmic_hw_params(struct snd_pcm_substream *substream,
 			break;
 		}
 	}
+
+	/* Vendor default digital gain (0xA0 ≈ 0 dB) */
+	regmap_write(host->regmap, SUN50I_DMIC_D0D1_VOL_CTR, 0xA0A0A0A0);
+	regmap_write(host->regmap, SUN50I_DMIC_D2D3_VOL_CTR, 0xA0A0A0A0);
 
 	switch (params_physical_width(params)) {
 	case 16:
@@ -280,6 +307,9 @@ static struct snd_soc_dai_driver sun50i_dmic_dai = {
 static const struct of_device_id sun50i_dmic_of_match[] = {
 	{
 		.compatible = "allwinner,sun50i-h6-dmic",
+	},
+	{
+		.compatible = "allwinner,sun60i-a733-dmic",
 	},
 	{ /* sentinel */ }
 };
