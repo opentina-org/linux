@@ -8,6 +8,7 @@
  */
 
 #include <linux/clk.h>
+#include <linux/clk-provider.h>
 #include <linux/dmaengine.h>
 #include <linux/module.h>
 #include <linux/of.h>
@@ -164,6 +165,7 @@ struct sun4i_i2s;
  * @field_fmt_sr: regmap field to set sample resolution.
  * @num_din_pins: input pins
  * @num_dout_pins: output pins (currently set but unused)
+ * @reparent_mod_clk: select audio PLL parent before set_rate (44.1k vs 48k)
  * @bclk_dividers: bit clock dividers array
  * @num_bclk_dividers: number of bit clock dividers
  * @mclk_dividers: mclk dividers array
@@ -187,6 +189,7 @@ struct sun4i_i2s_quirks {
 
 	unsigned int			num_din_pins;
 	unsigned int			num_dout_pins;
+	bool				reparent_mod_clk;
 
 	const struct sun4i_i2s_clk_div	*bclk_dividers;
 	unsigned int			num_bclk_dividers;
@@ -335,6 +338,40 @@ static bool sun4i_i2s_oversample_is_valid(unsigned int oversample)
 	return false;
 }
 
+/*
+ * A733 (sun60iw2) I2S module clock parents:
+ *   0: pll-audio0-4x (22.5792 MHz * 4) for 44.1 kHz family
+ *   2: pll-audio1-div5 (24.576 MHz * N) for 48 kHz family
+ * CCU marks these clocks CLK_SET_RATE_NO_REPARENT, so the driver must
+ * pick the parent explicitly (same as vendor snd_sun60iw2_i2s).
+ */
+static int sun4i_i2s_reparent_mod_clk(struct sun4i_i2s *i2s,
+				      unsigned long clk_rate)
+{
+	struct clk_hw *hw = __clk_get_hw(i2s->mod_clk);
+	struct clk_hw *parent;
+	struct clk *pclk;
+	unsigned int index;
+	int ret;
+
+	if (!i2s->variant->reparent_mod_clk)
+		return 0;
+
+	index = (clk_rate == 22579200) ? 0 : 2;
+	parent = clk_hw_get_parent_by_index(hw, index);
+	if (!parent)
+		return -EINVAL;
+
+	pclk = clk_hw_get_clk(parent, NULL);
+	if (IS_ERR(pclk))
+		return PTR_ERR(pclk);
+
+	ret = clk_set_parent(i2s->mod_clk, pclk);
+	clk_put(pclk);
+
+	return ret;
+}
+
 static int sun4i_i2s_set_clk_rate(struct snd_soc_dai *dai,
 				  unsigned int rate,
 				  unsigned int slots,
@@ -370,6 +407,12 @@ static int sun4i_i2s_set_clk_rate(struct snd_soc_dai *dai,
 	default:
 		dev_err(dai->dev, "Unsupported sample rate: %u\n", rate);
 		return -EINVAL;
+	}
+
+	ret = sun4i_i2s_reparent_mod_clk(i2s, clk_rate);
+	if (ret) {
+		dev_err(dai->dev, "Failed to set I2S clock parent\n");
+		return ret;
 	}
 
 	ret = clk_set_rate(i2s->mod_clk, clk_rate);
@@ -636,6 +679,7 @@ static int sun4i_i2s_hw_params(struct snd_pcm_substream *substream,
 		return -EINVAL;
 	}
 	i2s->playback_dma_data.addr_width = width;
+	i2s->capture_dma_data.addr_width = width;
 
 	sr = i2s->variant->get_sr(word_size);
 	if (sr < 0)
@@ -1077,7 +1121,7 @@ static int sun4i_i2s_set_tdm_slot(struct snd_soc_dai *dai,
 {
 	struct sun4i_i2s *i2s = snd_soc_dai_get_drvdata(dai);
 
-	if (slots > 8)
+	if (slots > 16)
 		return -EINVAL;
 
 	i2s->slots = slots;
@@ -1499,6 +1543,29 @@ static const struct sun4i_i2s_quirks sun50i_r329_i2s_quirks = {
 	.set_fmt		= sun50i_h6_i2s_set_soc_fmt,
 };
 
+/* A733 / sun60iw2: same register layout as R329, with audio PLL reparent */
+static const struct sun4i_i2s_quirks sun60i_a733_i2s_quirks = {
+	.has_reset		= true,
+	.pcm_formats		= SUN4I_FORMATS_H3,
+	.reg_offset_txdata	= SUN8I_I2S_FIFO_TX_REG,
+	.sun4i_i2s_regmap	= &sun50i_h6_i2s_regmap_config,
+	.field_clkdiv_mclk_en	= REG_FIELD(SUN4I_I2S_CLK_DIV_REG, 8, 8),
+	.field_fmt_wss		= REG_FIELD(SUN4I_I2S_FMT0_REG, 0, 2),
+	.field_fmt_sr		= REG_FIELD(SUN4I_I2S_FMT0_REG, 4, 6),
+	.num_din_pins		= 4,
+	.num_dout_pins		= 4,
+	.reparent_mod_clk	= true,
+	.bclk_dividers		= sun8i_i2s_clk_div,
+	.num_bclk_dividers	= ARRAY_SIZE(sun8i_i2s_clk_div),
+	.mclk_dividers		= sun8i_i2s_clk_div,
+	.num_mclk_dividers	= ARRAY_SIZE(sun8i_i2s_clk_div),
+	.get_bclk_parent_rate	= sun8i_i2s_get_bclk_parent_rate,
+	.get_sr			= sun8i_i2s_get_sr_wss,
+	.get_wss		= sun8i_i2s_get_sr_wss,
+	.set_chan_cfg		= sun50i_h6_i2s_set_chan_cfg,
+	.set_fmt		= sun50i_h6_i2s_set_soc_fmt,
+};
+
 static int sun4i_i2s_init_regmap_fields(struct device *dev,
 					struct sun4i_i2s *i2s)
 {
@@ -1528,7 +1595,7 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 	struct sun4i_i2s *i2s;
 	struct resource *res;
 	void __iomem *regs;
-	int irq, ret;
+	int ret;
 
 	i2s = devm_kzalloc(&pdev->dev, sizeof(*i2s), GFP_KERNEL);
 	if (!i2s)
@@ -1539,9 +1606,10 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 	if (IS_ERR(regs))
 		return PTR_ERR(regs);
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	/* IRQ is unused (DMA-driven); optional on newer SoCs such as A733 */
+	ret = platform_get_irq_optional(pdev, 0);
+	if (ret == -EPROBE_DEFER)
+		return ret;
 
 	i2s->variant = of_device_get_match_data(&pdev->dev);
 	if (!i2s->variant) {
@@ -1672,6 +1740,10 @@ static const struct of_device_id sun4i_i2s_match[] = {
 	{
 		.compatible = "allwinner,sun50i-r329-i2s",
 		.data = &sun50i_r329_i2s_quirks,
+	},
+	{
+		.compatible = "allwinner,sun60i-a733-i2s",
+		.data = &sun60i_a733_i2s_quirks,
 	},
 	{}
 };

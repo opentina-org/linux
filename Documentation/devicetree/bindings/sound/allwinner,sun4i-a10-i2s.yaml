@@ -35,6 +35,10 @@ properties:
       - items:
           - const: allwinner,sun20i-d1-i2s
           - const: allwinner,sun50i-r329-i2s
+      - const: allwinner,sun60i-a733-i2s
+      - items:
+          - const: allwinner,sun60i-a733-i2s
+          - const: allwinner,sun50i-r329-i2s
 
   reg:
     maxItems: 1
@@ -73,6 +77,7 @@ allOf:
               - allwinner,sun50i-a64-codec-i2s
               - allwinner,sun50i-h6-i2s
               - allwinner,sun50i-r329-i2s
+              - allwinner,sun60i-a733-i2s
 
     then:
       required:
@@ -119,11 +124,25 @@ allOf:
             - const: rx
             - const: tx
 
+  - if:
+      properties:
+        compatible:
+          contains:
+            enum:
+              - allwinner,sun60i-a733-i2s
+
+    then:
+      properties:
+        interrupts: false
+
+    else:
+      required:
+        - interrupts
+
 required:
   - "#sound-dai-cells"
   - compatible
   - reg
-  - interrupts
   - clocks
   - clock-names
   - dmas

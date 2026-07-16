@@ -388,6 +388,46 @@
 				allwinner,pinmux = <2>;
 				drive-strength = <10>;
 			};
+
+			/*
+			 * I2S0 on PB4-PB8: each pin has a distinct function name
+			 * in pinctrl-sun60iw2, so expose one group per signal.
+			 * Boards combine them via pinctrl-0.
+			 */
+			/omit-if-no-ref/
+			i2s0_mclk_pin: i2s0-mclk-pin {
+				pins = "PB4";
+				function = "i2s0_mclk";
+				allwinner,pinmux = <3>;
+			};
+
+			/omit-if-no-ref/
+			i2s0_bclk_pin: i2s0-bclk-pin {
+				pins = "PB5";
+				function = "i2s0_bclk";
+				allwinner,pinmux = <3>;
+			};
+
+			/omit-if-no-ref/
+			i2s0_lrck_pin: i2s0-lrck-pin {
+				pins = "PB6";
+				function = "i2s0_lrck";
+				allwinner,pinmux = <3>;
+			};
+
+			/omit-if-no-ref/
+			i2s0_dout0_pin: i2s0-dout0-pin {
+				pins = "PB7";
+				function = "i2s0_dout0";
+				allwinner,pinmux = <3>;
+			};
+
+			/omit-if-no-ref/
+			i2s0_din0_pin: i2s0-din0-pin {
+				pins = "PB8";
+				function = "i2s0_din0";
+				allwinner,pinmux = <3>;
+			};
 		};
 
 		ccu: ccu@2002000 {
@@ -809,6 +849,76 @@
 			dma-requests = <64>;
 			resets = <&ccu RST_BUS_DMA0>;
 			#dma-cells = <1>;
+		};
+
+		/*
+		 * I2S/PCM controllers (sun60iw2 / A733). Register layout matches
+		 * sun50i-h6/r329. DMA DRQ IDs and register bases from
+		 * driver_ref sun60iw2p1.dtsi.
+		 */
+		i2s0: i2s@2532000 {
+			#sound-dai-cells = <0>;
+			compatible = "allwinner,sun60i-a733-i2s",
+				     "allwinner,sun50i-r329-i2s";
+			reg = <0x0 0x02532000 0x0 0xa0>;
+			clocks = <&ccu CLK_BUS_I2SPCM0>, <&ccu CLK_I2SPCM0>;
+			clock-names = "apb", "mod";
+			resets = <&ccu RST_BUS_I2SPCM0>;
+			dmas = <&dma 3>, <&dma 3>;
+			dma-names = "rx", "tx";
+			status = "disabled";
+		};
+
+		i2s1: i2s@2533000 {
+			#sound-dai-cells = <0>;
+			compatible = "allwinner,sun60i-a733-i2s",
+				     "allwinner,sun50i-r329-i2s";
+			reg = <0x0 0x02533000 0x0 0xa0>;
+			clocks = <&ccu CLK_BUS_I2SPCM1>, <&ccu CLK_I2SPCM1>;
+			clock-names = "apb", "mod";
+			resets = <&ccu RST_BUS_I2SPCM1>;
+			dmas = <&dma 4>, <&dma 4>;
+			dma-names = "rx", "tx";
+			status = "disabled";
+		};
+
+		i2s2: i2s@2534000 {
+			#sound-dai-cells = <0>;
+			compatible = "allwinner,sun60i-a733-i2s",
+				     "allwinner,sun50i-r329-i2s";
+			reg = <0x0 0x02534000 0x0 0xa0>;
+			clocks = <&ccu CLK_BUS_I2SPCM2>, <&ccu CLK_I2SPCM2>;
+			clock-names = "apb", "mod";
+			resets = <&ccu RST_BUS_I2SPCM2>;
+			dmas = <&dma 5>, <&dma 5>;
+			dma-names = "rx", "tx";
+			status = "disabled";
+		};
+
+		i2s3: i2s@2535000 {
+			#sound-dai-cells = <0>;
+			compatible = "allwinner,sun60i-a733-i2s",
+				     "allwinner,sun50i-r329-i2s";
+			reg = <0x0 0x02535000 0x0 0xa0>;
+			clocks = <&ccu CLK_BUS_I2SPCM3>, <&ccu CLK_I2SPCM3>;
+			clock-names = "apb", "mod";
+			resets = <&ccu RST_BUS_I2SPCM3>;
+			dmas = <&dma 6>, <&dma 6>;
+			dma-names = "rx", "tx";
+			status = "disabled";
+		};
+
+		i2s4: i2s@2536000 {
+			#sound-dai-cells = <0>;
+			compatible = "allwinner,sun60i-a733-i2s",
+				     "allwinner,sun50i-r329-i2s";
+			reg = <0x0 0x02536000 0x0 0xa0>;
+			clocks = <&ccu CLK_BUS_I2SPCM4>, <&ccu CLK_I2SPCM4>;
+			clock-names = "apb", "mod";
+			resets = <&ccu RST_BUS_I2SPCM4>;
+			dmas = <&dma 7>, <&dma 7>;
+			dma-names = "rx", "tx";
+			status = "disabled";
 		};
 
 		pwm0: pwm@2527000 {
