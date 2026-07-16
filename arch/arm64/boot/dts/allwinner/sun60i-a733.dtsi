@@ -220,8 +220,8 @@
 		uart0: uart@2500000 {
 			compatible = "snps,dw-apb-uart";
 			reg = <0x0 0x2500000 0x0 0x400>;
-			clocks = <&ccu CLK_UART1>;
-			resets = <&ccu RST_BUS_UART1>;
+			clocks = <&ccu CLK_UART0>;
+			resets = <&ccu RST_BUS_UART0>;
 			interrupts = <GIC_SPI 2 IRQ_TYPE_LEVEL_HIGH>;
 			reg-shift = <2>;
 			reg-io-width = <4>;
