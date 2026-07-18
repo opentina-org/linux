@@ -22,12 +22,12 @@ config SUN50I_H6_PRCM_PPU
 	  optional for the H6.
 
 config SUN55I_PCK600
-	tristate "Allwinner A523 PCK-600 power domain driver"
+	tristate "Allwinner A523/A733 PCK-600 power domain driver"
 	depends on ARCH_SUNXI || COMPILE_TEST
 	depends on PM
 	default ARCH_SUNXI
 	select PM_GENERIC_DOMAINS
 	help
 	  Say y to enable the PCK-600 power domain driver. This is required
-	  to enable power to certain peripherals, such as the display and
-	  video engines.
+	  to enable power to certain peripherals, such as the display,
+	  video engines, and the VI (CSI/ISP) domain on A733.

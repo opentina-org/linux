@@ -1,0 +1,650 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+/*
+ * Allwinner A733 VIN / MIPI-CSI device tree fragment
+ * Ported from driver_ref sun60iw2p1.dtsi (MIPI0 pipeline + stubs).
+ */
+
+#include <dt-bindings/power/allwinner,sun60i-a733-pck-600.h>
+
+&pio {
+			csi_mclk0_pins_a: csi_mclk0@0 {
+				pins = "PE0";
+				function = "mcsi0";
+				allwinner,pinmux = <2>;
+				drive-strength = <20>;
+			};
+
+			csi_mclk0_pins_b: csi_mclk0@1 {
+				pins = "PE0";
+				function = "gpio_in";
+				allwinner,pinmux = <0>;
+			};
+
+			csi_mclk1_pins_a: csi_mclk1@0 {
+				pins = "PE5";
+				function = "mcsi1";
+				allwinner,pinmux = <2>;
+				drive-strength = <20>;
+			};
+
+			csi_mclk1_pins_b: csi_mclk1@1 {
+				pins = "PE5";
+				function = "gpio_in";
+				allwinner,pinmux = <0>;
+			};
+
+			csi_mclk2_pins_a: csi_mclk2@0 {
+				pins = "PE9";
+				function = "mcsi2";
+				allwinner,pinmux = <2>;
+				drive-strength = <20>;
+			};
+
+			csi_mclk2_pins_b: csi_mclk2@1 {
+				pins = "PE9";
+				function = "gpio_in";
+				allwinner,pinmux = <0>;
+			};
+
+			ncsi0_8bit_pins_a: ncsi0_8bit@0 {
+				pins = "PE0", "PE1", "PE2",
+				"PE3", "PE4", "PE6", "PE7",
+				"PE8", "PE9", "PE10";
+				function = "ncsi0";
+				allwinner,pinmux = <7>;
+				drive-strength = <20>;
+			};
+
+			ncsi0_8bit_pins_b: ncsi0_8bit@1 {
+				pins = "PE0", "PE1", "PE2",
+				"PE3", "PE4", "PE6", "PE7",
+				"PE8", "PE9", "PE10";
+				function = "gpio_in";
+				allwinner,pinmux = <0>;
+			};
+
+			ncsi1_8bit_pins_a: ncsi1_8bit@0 {
+				pins = "PK0", "PK1", "PK2",
+				"PK19", "PK18", "PK17", "PK16",
+				"PK15", "PK14", "PK13", "PK12";
+				function = "ncsi1";
+				allwinner,pinmux = <7>;
+				drive-strength = <20>;
+			};
+
+			ncsi1_8bit_pins_b: ncsi1_8bit@1 {
+				pins = "PK0", "PK1", "PK2",
+				"PK19", "PK18", "PK17", "PK16",
+				"PK15", "PK14", "PK13", "PK12";
+				function = "gpio_in";
+				allwinner,pinmux = <0>;
+			};
+
+			ncsi1_16bit_pins_a: ncsi1_16bit@0 {
+				pins = "PK0", "PK1", "PK2",
+				"PK19", "PK18", "PK17", "PK16",
+				"PK15", "PK14", "PK13", "PK12",
+				"PK11", "PK10", "PK9", "PK8",
+				"PK7", "PK6", "PK5", "PK4";
+				function = "ncsi1";
+				allwinner,pinmux = <7>;
+				drive-strength = <20>;
+			};
+
+			ncsi1_16bit_pins_b: ncsi1_16bit@1 {
+				pins = "PK0", "PK1", "PK2",
+				"PK19", "PK18", "PK17", "PK16",
+				"PK15", "PK14", "PK13", "PK12",
+				"PK11", "PK10", "PK9", "PK8",
+				"PK7", "PK6", "PK5", "PK4";
+				function = "gpio_in";
+				allwinner,pinmux = <0>;
+			};
+
+			mipia_pins_a: mipia@0 {
+				pins = "PK0", "PK1", "PK2", "PK3", "PK4",
+				"PK5", "PK6", "PK7", "PK8", "PK9";
+				function = "mcsia";
+				allwinner,pinmux = <2>;
+				drive-strength = <10>;
+
+			};
+
+			mipia_pins_b: mipia@1 {
+				pins = "PK0", "PK1", "PK2", "PK3", "PK4",
+				"PK5", "PK6", "PK7", "PK8", "PK9";
+				function = "gpio_in";
+				allwinner,pinmux = <0>;
+			};
+
+			mipib_pins_a: mipib@0 {
+				pins = "PK10", "PK11", "PK12", "PK13", "PK14",
+				"PK15", "PK16", "PK17", "PK18", "PK19";
+				function = "mcsib";
+				allwinner,pinmux = <2>;
+				drive-strength = <10>;
+			};
+
+			mipib_pins_b: mipib@1 {
+				pins = "PK10", "PK11", "PK12", "PK13", "PK14",
+				"PK15", "PK16", "PK17", "PK18", "PK19";
+				function = "gpio_in";
+				allwinner,pinmux = <0>;
+
+			};
+
+			mipic_pins_a: mipic@0 {
+				pins = "PK20", "PK21", "PK22",
+					"PK23", "PK24", "PK25";
+				function = "mcsic";
+				allwinner,pinmux = <2>;
+				drive-strength = <10>;
+
+			};
+
+			mipic_pins_b: mipic@1 {
+				pins = "PK20", "PK21", "PK22",
+					"PK23", "PK24", "PK25";
+				function = "gpio_in";
+				allwinner,pinmux = <0>;
+			};
+};
+
+&soc {
+		vind0: vind@5800800 {
+			compatible = "allwinner,sun60i-vin-media", "simple-bus";
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+			device_id = <0>;
+			csi_top = <600000000>;
+			csi_isp = <540000000>;
+			reg = <0x0 0x05800800 0x0 0x200>,
+				<0x0 0x05800000 0x0 0x800>,
+				<0x0 0x05810000 0x0 0x100>;
+			interrupts = <GIC_SPI 135 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_CSI>, <&ccu CLK_PLL_VIDEO0_4X>,
+				<&ccu CLK_CSI_MASTER0>, <&sys24M>, <&ccu CLK_PLL_VIDEO0_3X>,
+				<&ccu CLK_CSI_MASTER1>, <&sys24M>, <&ccu CLK_PLL_VIDEO0_3X>,
+				<&ccu CLK_CSI_MASTER2>, <&sys24M>, <&ccu CLK_PLL_VIDEO0_3X>,
+				<&ccu CLK_ISP>, <&ccu CLK_PLL_VIDEO0_4X>,
+				<&ccu CLK_BUS_CSI>, <&ccu CLK_CSI_MBUS>, <&ccu CLK_ISP_MBUS>;
+			clock-names = "csi_top", "csi_top_src",
+						"csi_mclk0", "csi_mclk0_24m", "csi_mclk0_pll",
+						"csi_mclk1", "csi_mclk1_24m", "csi_mclk1_pll",
+						"csi_mclk2", "csi_mclk2_24m", "csi_mclk2_pll",
+						"csi_isp", "csi_isp_src",
+						"csi_bus", "csi_mbus", "csi_isp_mbus";
+			resets = <&ccu RST_BUS_CSI>;
+			reset-names = "csi_ret";
+			pinctrl-names = "mclk0-default", "mclk0-sleep", "mclk1-default", "mclk1-sleep",
+							"mclk2-default", "mclk2-sleep";
+			pinctrl-0 = <&csi_mclk0_pins_a>;
+			pinctrl-1 = <&csi_mclk0_pins_b>;
+			pinctrl-2 = <&csi_mclk1_pins_a>;
+			pinctrl-3 = <&csi_mclk1_pins_b>;
+			pinctrl-4 = <&csi_mclk2_pins_a>;
+			pinctrl-5 = <&csi_mclk2_pins_b>;
+			power-domains = <&pck600 PD_VI>;
+			status = "okay";
+
+			csi0: csi@5820000 {
+				compatible = "allwinner,sunxi-csi";
+				reg = <0x0 0x05820000 0x0 0x1000>;
+				interrupts = <GIC_SPI 125 IRQ_TYPE_LEVEL_HIGH>;
+				device_id = <0>;
+				status = "okay";
+			};
+			csi1: csi@5821000 {
+				compatible = "allwinner,sunxi-csi";
+				reg = <0x0 0x05821000 0x0 0x1000>;
+				interrupts = <GIC_SPI 126 IRQ_TYPE_LEVEL_HIGH>;
+				pinctrl-names = "default","sleep";
+				pinctrl-0 = <&ncsi0_8bit_pins_a>;
+				pinctrl-1 = <&ncsi0_8bit_pins_b>;
+				device_id = <1>;
+				status = "disabled";
+			};
+			csi2: csi@5822000 {
+				compatible = "allwinner,sunxi-csi";
+				reg = <0x0 0x05822000 0x0 0x1000>;
+				interrupts = <GIC_SPI 127 IRQ_TYPE_LEVEL_HIGH>;
+				pinctrl-names = "default","sleep";
+				pinctrl-0 = <&ncsi1_8bit_pins_a>;
+				pinctrl-1 = <&ncsi1_8bit_pins_b>;
+				device_id = <2>;
+				status = "disabled";
+			};
+			mipi0: mipi@5810100 {
+				compatible = "allwinner,sunxi-mipi";
+				reg = <0x0 0x05810100 0x0 0x100>,
+					<0x0 0x05811000 0x0 0x400>;
+				interrupts = <GIC_SPI 133 IRQ_TYPE_LEVEL_HIGH>;
+				pinctrl-names = "mipi0-default","mipi0-sleep";
+				pinctrl-0 = <&mipia_pins_a>;
+				pinctrl-1 = <&mipia_pins_b>;
+				device_id = <0>;
+				status = "okay";
+			};
+			mipi1: mipi@5810200 {
+				compatible = "allwinner,sunxi-mipi";
+				reg = <0x0 0x05810200 0x0 0x100>,
+					<0x0 0x05811400 0x0 0x400>;
+				pinctrl-names = "mipi1-default","mipi1-sleep";
+				pinctrl-0 = <&mipib_pins_a>;
+				pinctrl-1 = <&mipib_pins_b>;
+				device_id = <1>;
+				status = "okay";
+			};
+			mipi2: mipi@5810300 {
+				compatible = "allwinner,sunxi-mipi";
+				reg = <0x0 0x05810300 0x0 0x100>,
+					<0x0 0x05811800 0x0 0x400>;
+				pinctrl-names = "mipi2-default","mipi2-sleep";
+				pinctrl-0 = <&mipic_pins_a>;
+				pinctrl-1 = <&mipic_pins_b>;
+				device_id = <2>;
+				status = "okay";
+			};
+			tdm0: tdm@5908000 {
+				compatible = "allwinner,sunxi-tdm";
+				reg = <0x0 0x05908000 0x0 0x400>;
+				interrupts = <GIC_SPI 134 IRQ_TYPE_LEVEL_HIGH>;
+				work_mode = <0x0>;
+				device_id = <0>;
+				iommus = <&mmu_aw 2 0>;
+				status = "okay";
+			};
+			isp00:isp@5900000 {
+				compatible = "allwinner,sunxi-isp";
+				reg = <0x0 0x05900000 0x0 0x1300>;
+				interrupts = <GIC_SPI 129 IRQ_TYPE_LEVEL_HIGH>;
+				work_mode = <0x0>;
+				device_id = <0>;
+				iommus = <&mmu_aw 2 0>;
+				status = "okay";
+			};
+			isp01:isp@58ffffc {
+				compatible = "allwinner,sunxi-isp";
+				reg = <0x0 0x058ffffc 0x0 0x1304>;
+				interrupts = <GIC_SPI 130 IRQ_TYPE_LEVEL_HIGH>;
+				work_mode = <0xff>;
+				device_id = <1>;
+				iommus = <&mmu_aw 2 0>;
+				status = "okay";
+			};
+			isp02:isp@58ffff8 {
+				compatible = "allwinner,sunxi-isp";
+				reg = <0x0 0x058ffff8 0x0 0x1308>;
+				interrupts = <GIC_SPI 131 IRQ_TYPE_LEVEL_HIGH>;
+				work_mode = <0xff>;
+				device_id = <2>;
+				iommus = <&mmu_aw 2 0>;
+				status = "okay";
+			};
+			isp03:isp@58ffff4 {
+				compatible = "allwinner,sunxi-isp";
+				reg = <0x0 0x058ffff4 0x0 0x130c>;
+				interrupts = <GIC_SPI 132 IRQ_TYPE_LEVEL_HIGH>;
+				work_mode = <0xff>;
+				device_id = <3>;
+				iommus = <&mmu_aw 2 0>;
+				status = "okay";
+			};
+			isp10:isp@4 {
+				compatible = "allwinner,sunxi-isp";
+				device_id = <4>;
+				iommus = <&mmu_aw 2 0>;
+				status = "okay";
+			};
+			isp20:isp@5 {
+				compatible = "allwinner,sunxi-isp";
+				device_id = <5>;
+				iommus = <&mmu_aw 2 0>;
+				status = "okay";
+			};
+			isp30:isp@6 {
+				compatible = "allwinner,sunxi-isp";
+				device_id = <6>;
+				iommus = <&mmu_aw 2 0>;
+				status = "okay";
+			};
+			scaler00:scaler@5910000 {
+				compatible = "allwinner,sunxi-scaler";
+				reg = <0x0 0x05910000 0x0 0x400>;
+				interrupts = <GIC_SPI 121 IRQ_TYPE_LEVEL_HIGH>;
+				work_mode = <0x0>;
+				device_id = <0>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler01:scaler@590fffc {
+				compatible = "allwinner,sunxi-scaler";
+				reg = <0x0 0x0590fffc 0x0 0x404>;
+				work_mode = <0xff>;
+				device_id = <1>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler02:scaler@590fff8 {
+				compatible = "allwinner,sunxi-scaler";
+				reg = <0x0 0x0590fff8 0x0 0x408>;
+				work_mode = <0xff>;
+				device_id = <2>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler03:scaler@590fff4 {
+				compatible = "allwinner,sunxi-scaler";
+				reg = <0x0 0x0590fff4 0x0 0x40c>;
+				work_mode = <0xff>;
+				device_id = <3>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler10:scaler@5910400 {
+				compatible = "allwinner,sunxi-scaler";
+				reg = <0x0 0x05910400 0x0 0x400>;
+				interrupts = <GIC_SPI 122 IRQ_TYPE_LEVEL_HIGH>;
+				work_mode = <0x0>;
+				device_id = <4>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler11:scaler@59103fc {
+				compatible = "allwinner,sunxi-scaler";
+				reg = <0x0 0x059103fc 0x0 0x404>;
+				work_mode = <0xff>;
+				device_id = <5>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler12:scaler@59103f8 {
+				compatible = "allwinner,sunxi-scaler";
+				reg = <0x0 0x059103f8 0x0 0x408>;
+				work_mode = <0xff>;
+				device_id = <6>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler13:scaler@59103f4 {
+				compatible = "allwinner,sunxi-scaler";
+				reg = <0x0 0x059103f4 0x0 0x40c>;
+				work_mode = <0xff>;
+				device_id = <7>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler20:scaler@5910800 {
+				compatible = "allwinner,sunxi-scaler";
+				reg = <0x0 0x05910800 0x0 0x400>;
+				interrupts = <GIC_SPI 123 IRQ_TYPE_LEVEL_HIGH>;
+				work_mode = <0x0>;
+				device_id = <8>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler21:scaler@59107fc {
+				compatible = "allwinner,sunxi-scaler";
+				reg = <0x0 0x059107fc 0x0 0x404>;
+				work_mode = <0xff>;
+				device_id = <9>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler22:scaler@59107f8 {
+				compatible = "allwinner,sunxi-scaler";
+				reg = <0x0 0x059107f8 0x0 0x408>;
+				work_mode = <0xff>;
+				device_id = <10>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler23:scaler@59107f4 {
+				compatible = "allwinner,sunxi-scaler";
+				reg = <0x0 0x059107f4 0x0 0x40c>;
+				work_mode = <0xff>;
+				device_id = <11>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler30:scaler@5910c00 {
+				compatible = "allwinner,sunxi-scaler";
+				reg = <0x0 0x05910c00 0x0 0x400>;
+				interrupts = <GIC_SPI 124 IRQ_TYPE_LEVEL_HIGH>;
+				work_mode = <0x0>;
+				device_id = <12>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler31:scaler@5910bfc {
+				compatible = "allwinner,sunxi-scaler";
+				reg = <0x0 0x05910bfc 0x0 0x404>;
+				work_mode = <0xff>;
+				device_id = <13>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler32:scaler@5910bf8 {
+				compatible = "allwinner,sunxi-scaler";
+				reg = <0x0 0x05910bf8 0x0 0x408>;
+				work_mode = <0xff>;
+				device_id = <14>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler33:scaler@5910bf4 {
+				compatible = "allwinner,sunxi-scaler";
+				reg = <0x0 0x05910bf4 0x0 0x40c>;
+				work_mode = <0xff>;
+				device_id = <15>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler40:scaler@16 {
+				compatible = "allwinner,sunxi-scaler";
+				device_id = <16>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			scaler50:scaler@17 {
+				compatible = "allwinner,sunxi-scaler";
+				device_id = <17>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+			actuator0: actuator@2108180 {
+				compatible = "allwinner,sunxi-actuator";
+				device_type = "actuator0";
+				reg = <0x0 0x02108180 0x0 0x10>;
+				actuator0_name = "ad5820_act";
+				actuator0_slave = <0x18>;
+				actuator0_af_pwdn = <>;
+				actuator0_afvdd = "afvcc-csi";
+				actuator0_afvdd_vol = <2800000>;
+				status = "disabled";
+			};
+			flash0: flash@2108190 {
+				device_type = "flash0";
+				compatible = "allwinner,sunxi-flash";
+				reg = <0x0 0x02108190 0x0 0x10>;
+				flash0_type = <2>;
+				flash0_en = <>;
+				flash0_mode = <>;
+				flash0_flvdd = "";
+				flash0_flvdd_vol = <>;
+				device_id = <0>;
+				status = "disabled";
+			};
+			sensor0: sensor@5812000 {
+				reg = <0x0 0x05812000 0x0 0x10>;
+				device_type = "sensor0";
+				compatible = "allwinner,sunxi-sensor";
+				sensor0_mname = "ov5640";
+				sensor0_twi_cci_id = <2>;
+				sensor0_twi_addr = <0x78>;
+				sensor0_mclk_id = <0>;
+				sensor0_pos = "rear";
+				sensor0_isp_used = <0>;
+				sensor0_fmt = <0>;
+				sensor0_stby_mode = <0>;
+				sensor0_vflip = <0>;
+				sensor0_hflip = <0>;
+				sensor0_iovdd-supply = <>;
+				sensor0_iovdd_vol = <>;
+				sensor0_avdd-supply = <>;
+				sensor0_avdd_vol = <>;
+				sensor0_dvdd-supply = <>;
+				sensor0_dvdd_vol = <>;
+				sensor0_power_en = <>;
+				sensor0_reset = <>;
+				sensor0_pwdn = <>;
+				sensor0_sm_vs = <>;
+				flash_handle = <&flash0>;
+				act_handle = <&actuator0>;
+				device_id = <0>;
+				status	= "disabled";
+			};
+			sensor1: sensor@5812010 {
+				reg = <0x0 0x05812010 0x0 0x10>;
+				device_type = "sensor1";
+				compatible = "allwinner,sunxi-sensor";
+				sensor1_mname = "ov5647";
+				sensor1_twi_cci_id = <3>;
+				sensor1_twi_addr = <0x6c>;
+				sensor1_mclk_id = <1>;
+				sensor1_pos = "front";
+				sensor1_isp_used = <0>;
+				sensor1_fmt = <0>;
+				sensor1_stby_mode = <0>;
+				sensor1_vflip = <0>;
+				sensor1_hflip = <0>;
+				sensor1_iovdd-supply = <>;
+				sensor1_iovdd_vol = <>;
+				sensor1_avdd-supply = <>;
+				sensor1_avdd_vol = <>;
+				sensor1_dvdd-supply = <>;
+				sensor1_dvdd_vol = <>;
+				sensor1_power_en = <>;
+				sensor1_reset = <>;
+				sensor1_pwdn = <>;
+				sensor1_sm_vs = <>;
+				flash_handle = <>;
+				act_handle = <>;
+				device_id = <1>;
+				status	= "disabled";
+			};
+			sensor2: sensor@5812020 {
+				reg = <0x0 0x05812020 0x0 0x10>;
+				device_type = "sensor2";
+				compatible = "allwinner,sunxi-sensor";
+				sensor2_mname = "imx386_mipi";
+				sensor2_twi_cci_id = <3>;
+				sensor2_twi_addr = <0x6c>;
+				sensor2_mclk_id = <1>;
+				sensor2_pos = "rear";
+				sensor2_isp_used = <0>;
+				sensor2_fmt = <0>;
+				sensor2_stby_mode = <0>;
+				sensor2_vflip = <0>;
+				sensor2_hflip = <0>;
+				sensor2_iovdd-supply = <>;
+				sensor2_iovdd_vol = <>;
+				sensor2_avdd-supply = <>;
+				sensor2_avdd_vol = <>;
+				sensor2_dvdd-supply = <>;
+				sensor2_dvdd_vol = <>;
+				sensor2_power_en = <>;
+				sensor2_reset = <>;
+				sensor2_pwdn = <>;
+				sensor2_sm_vs = <>;
+				flash_handle = <>;
+				act_handle = <>;
+				device_id = <2>;
+				status	= "disabled";
+			};
+			sensor_list0:sensor_list@5812040 {
+				reg = <0x0 0x05812040 0x0 0x10>;
+				device_type = "sensor_list0";
+				compatible = "allwinner,sunxi-sensor-list";
+				csi_sel = <0>;
+				sensor00_mname = "ov5675_mipi_b";
+				sensor00_twi_addr = <0x60>;
+				sensor00_type = <1>;
+				sensor00_hflip =  <1>;
+				sensor00_vflip = <0>;
+				sensor00_act_used = <1>;
+				sensor00_act_name = "dw9714_act";
+				sensor00_act_twi_addr = <0x18>;
+				sensor01_mname = "gc05a2_mipi_b";
+				sensor01_twi_addr = <0x62>;
+				sensor01_type = <1>;
+				sensor01_hflip =  <0>;
+				sensor01_vflip = <0>;
+				sensor01_act_used = <1>;
+				sensor01_act_name = "dw9714_act";
+				sensor01_act_twi_addr = <0x18>;
+				sensor02_mname = "gc5035_mipi_b";
+				sensor02_twi_addr = <0x64>;
+				sensor02_type = <1>;
+				sensor02_hflip =  <0>;
+				sensor02_vflip = <0>;
+				sensor02_act_used = <1>;
+				sensor02_act_name = "dw9714_act";
+				sensor02_act_twi_addr = <0x18>;
+				device_id = <0>;
+				status	= "disabled";
+			};
+			sensor_list1:sensor_list@5812050 {
+				reg = <0x0 0x05812050 0x0 0x10>;
+				device_type = "sensor_list1";
+				compatible = "allwinner,sunxi-sensor-list";
+				csi_sel = <0>;
+				sensor10_mname = "ov02a10_mipi_f";
+				sensor10_twi_addr = <0x70>;
+				sensor10_type = <1>;
+				sensor10_hflip =  <1>;
+				sensor10_vflip = <0>;
+				sensor10_act_used = <0>;
+				sensor10_act_name = "";
+				sensor10_act_twi_addr = <>;
+				sensor11_mname = "gc02m1_mipi_f";
+				sensor11_twi_addr = <0x72>;
+				sensor11_type = <1>;
+				sensor11_hflip =  <1>;
+				sensor11_vflip = <0>;
+				sensor11_act_used = <0>;
+				sensor11_act_name = "";
+				sensor11_act_twi_addr = <>;
+				sensor12_mname = "gc02m2_mipi_f";
+				sensor12_twi_addr = <0x74>;
+				sensor12_type = <1>;
+				sensor12_hflip =  <0>;
+				sensor12_vflip = <0>;
+				sensor12_act_used = <0>;
+				sensor12_act_name = "";
+				sensor12_act_twi_addr = <>;
+				device_id = <1>;
+				status	= "disabled";
+			};
+			vinc00:vinc@5830000 {
+				device_type = "vinc0";
+				compatible = "allwinner,sun60i-vin-core";
+				reg = <0x0 0x05830000 0x0 0x1000>;
+				interrupts = <GIC_SPI 117 IRQ_TYPE_LEVEL_HIGH>;
+				vinc0_csi_sel = <0>;
+				vinc0_mipi_sel = <0>;
+				vinc0_isp_sel = <0>;
+				vinc0_isp_tx_ch = <0>;
+				vinc0_tdm_rx_sel = <0>;
+				vinc0_rear_sensor_sel = <0>;
+				vinc0_front_sensor_sel = <0>;
+				vinc0_sensor_list = <0>;
+				device_id = <0>;
+				work_mode = <0x0>;
+				iommus = <&mmu_aw 1 0>;
+				status = "okay";
+			};
+
+	};
+};

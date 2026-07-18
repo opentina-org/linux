@@ -1,0 +1,67 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Allwinner sun60i VIN (CSI / MIPI / ISP / VIPP) for A733 / sun60iw2
+#
+
+menuconfig VIDEO_SUN60I_VIN
+	tristate "Allwinner sun60i VIN (CSI/MIPI/ISP/VIPP) camera driver"
+	depends on ARCH_SUNXI || COMPILE_TEST
+	depends on VIDEO_DEV
+	depends on MEDIA_CAMERA_SUPPORT
+	select VIDEOBUF2_DMA_CONTIG
+	help
+	  Hawkview video input pipeline for Allwinner A733 (sun60iw2):
+	  MIPI CSI-2 combo PHY, CSI parser, ISP600, VIPP scaler, and VIN DMA.
+
+if VIDEO_SUN60I_VIN
+
+config ARCH_SUN60IW2
+	bool
+	default y
+	help
+	  Select sun60iw2 register layout and combo CSI / ISP600 backends.
+
+config CSI_VIN
+	tristate "V4L2 VIN core"
+	default y
+	select VIDEOBUF2_DMA_CONTIG
+
+config FLASH
+	tristate "VIN flash helper"
+	default n
+
+config ACTUATOR
+	tristate "VIN lens actuator"
+	default n
+
+config SENSOR_LIST
+	tristate "Adaptive sensor list"
+	default n
+
+config VIN_LOG
+	bool "Verbose VIN debug logging"
+	depends on DYNAMIC_DEBUG
+	default n
+
+config SUPPORT_ISP_TDM
+	bool "ISP TDM support"
+	default y
+
+config CSI_CCI
+	tristate "Hardware CCI (alternative to I2C)"
+	default n
+
+config SENSOR_POWER
+	tristate "VIN sensor power helper"
+	default n
+
+config VIN_IOMMU
+	bool "Use IOMMU for VIN DMA buffers / master enable"
+	depends on SUNXI_IOMMU
+	default y
+	help
+	  Enable sunxi IOMMU master control for CSI/ISP (masters 1/2 on
+	  A733). Buffer allocation still uses dma_alloc_coherent with the
+	  device IOMMU mapping when DT provides iommus.
+
+endif # VIDEO_SUN60I_VIN

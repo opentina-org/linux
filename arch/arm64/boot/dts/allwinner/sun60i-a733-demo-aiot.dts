@@ -295,3 +295,42 @@
 		     &i2s0_dout0_pin &i2s0_din0_pin>;
 	status = "okay";
 };
+
+/*
+ * MIPI-CSI / sun60i VIN
+ * ---------------------
+ * SoC nodes live in sun60i-a733-vin.dtsi (vind0, mipi0, csi0, isp, vinc00).
+ * Driver: drivers/media/platform/sunxi/sun60i-vin (CONFIG_VIDEO_SUN60I_VIN).
+ * Enable a sensor on the board I2C bus and override &sensor0, for example:
+ *
+ *   &sensor0 {
+ *       sensor0_mname = "gc2053_mipi";
+ *       sensor0_twi_cci_id = <2>;
+ *       sensor0_twi_addr = <0x6e>;
+ *       sensor0_mclk_id = <0>;
+ *       sensor0_iovdd-supply = <&reg_aldo1>;
+ *       sensor0_avdd-supply = <&reg_aldo1>;
+ *       sensor0_dvdd-supply = <&reg_dldo1>;
+ *       sensor0_reset = <&pio PE 1 GPIO_ACTIVE_LOW>;
+ *       sensor0_pwdn = <&pio PE 2 GPIO_ACTIVE_LOW>;
+ *       status = "okay";
+ *   };
+ *
+ * Also enable CONFIG_SENSOR_<NAME> in the kernel and rebuild.
+ * Default pipeline: MIPI0 (PK0-PK9) -> CSI0 -> ISP0 -> vinc00 (/dev/video0).
+ */
+&vind0 {
+	status = "okay";
+};
+
+&mipi0 {
+	status = "okay";
+};
+
+&csi0 {
+	status = "okay";
+};
+
+&vinc00 {
+	status = "okay";
+};

@@ -14,6 +14,7 @@
 #include <dt-bindings/reset/sun60i-a733-ccu.h>
 #include <dt-bindings/thermal/thermal.h>
 #include <dt-bindings/reset/sun60i-a733-r-ccu.h>
+#include <dt-bindings/power/allwinner,sun60i-a733-pck-600.h>
 #include "sun60i-a733-cpu-opp.dtsi"
 
 / {
@@ -338,7 +339,7 @@
 		clock-output-names = "ext-32k";
 	};
 
-	soc {
+	soc: soc {
 		compatible = "simple-bus";
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -1173,4 +1174,14 @@
 			status = "disabled";
 		};
 	};
+
+	/* PCK-600 power domains (VI required for CSI/ISP) */
+	pck600: power-controller@7060000 {
+		compatible = "allwinner,sun60i-a733-pck-600";
+		reg = <0x0 0x07060000 0x0 0xb000>;
+		clocks = <&r_ccu CLK_R_PPU>;
+		#power-domain-cells = <1>;
+	};
 };
+
+#include "sun60i-a733-vin.dtsi"
