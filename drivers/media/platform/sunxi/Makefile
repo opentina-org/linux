@@ -7,3 +7,4 @@ obj-y		+= sun8i-a83t-mipi-csi2/
 obj-y		+= sun8i-di/
 obj-y		+= sun8i-rotate/
 obj-$(CONFIG_VIDEO_SUN60I_VIN)	+= sun60i-vin/
+obj-$(CONFIG_VIDEO_SUN60I_CEDAR_VE)	+= cedar-ve/

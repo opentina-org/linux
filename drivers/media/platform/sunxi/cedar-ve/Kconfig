@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Allwinner cedar-ve (A733 / sun60iw2)
+#
+
+config VIDEO_SUN60I_CEDAR_VE
+	tristate "Allwinner sun60i cedar-ve video encoder/decoder"
+	depends on ARCH_SUNXI || COMPILE_TEST
+	depends on HAS_DMA
+	select DMA_SHARED_BUFFER
+	select ARCH_SUN60IW2
+	help
+	  Char-device driver for Allwinner A733 (sun60iw2) video engine:
+	  creates /dev/cedar_dev (decode) and /dev/cedar_dev_ve2 (encode).
+	  Userspace needs CedarX / libcedarc.
+
+if VIDEO_SUN60I_CEDAR_VE
+
+config VIDEO_SUN60I_CEDAR_VE_KERNEL_ENC
+	bool "In-kernel video encoder module"
+	default n
+	help
+	  Enable sunxi in-kernel encoder blobs (not used on OpenTina A733).
+
+config VIDEO_SUN60I_CEDAR_VE_KERNEL_DEC
+	bool "In-kernel video decoder module"
+	default n
+	help
+	  Enable sunxi in-kernel decoder blobs (not used on OpenTina A733).
+
+config VIDEO_SUN60I_CEDAR_VE_DEBUG
+	bool "Enable cedar-ve dynamic debug"
+	depends on DYNAMIC_DEBUG
+	default y
+
+endif # VIDEO_SUN60I_CEDAR_VE
