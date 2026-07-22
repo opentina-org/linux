@@ -39,3 +39,7 @@
 	vmmc-supply = <&reg_3v3>;
 	status = "okay";
 };
+
+&gpu {
+	status = "okay";
+};

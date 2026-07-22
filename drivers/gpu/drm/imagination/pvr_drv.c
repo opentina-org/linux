@@ -1494,6 +1494,10 @@ static const struct of_device_id dt_match[] = {
 		.data = &pvr_device_data_pwrseq,
 	},
 	{
+		.compatible = "allwinner,a733-gpu",
+		.data = &pvr_device_data_manual,
+	},
+	{
 		.compatible = "img,img-rogue",
 		.data = &pvr_device_data_manual,
 	},

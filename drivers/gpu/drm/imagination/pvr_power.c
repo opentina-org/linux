@@ -240,10 +240,19 @@ static int pvr_power_init_manual(struct pvr_device *pvr_dev)
 	struct drm_device *drm_dev = from_pvr_device(pvr_dev);
 	struct reset_control *reset;
 
-	reset = devm_reset_control_get_optional_exclusive(drm_dev->dev, NULL);
+	/* A733 uses reset-names = "reset_bus"; fall back to the first reset. */
+	reset = devm_reset_control_get_optional_exclusive(drm_dev->dev,
+							  "reset_bus");
 	if (IS_ERR(reset))
 		return dev_err_probe(drm_dev->dev, PTR_ERR(reset),
 				     "failed to get gpu reset line\n");
+	if (!reset) {
+		reset = devm_reset_control_get_optional_exclusive(drm_dev->dev,
+								  NULL);
+		if (IS_ERR(reset))
+			return dev_err_probe(drm_dev->dev, PTR_ERR(reset),
+					     "failed to get gpu reset line\n");
+	}
 
 	pvr_dev->reset = reset;
 

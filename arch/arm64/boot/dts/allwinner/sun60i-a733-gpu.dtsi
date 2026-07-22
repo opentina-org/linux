@@ -1,0 +1,54 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+/*
+ * Allwinner A733 (sun60iw2) Imagination PowerVR GPU fragment.
+ * Ported from driver_ref sun60iw2p1.dtsi; uses mainline DRM PowerVR
+ * clock-names (core / mem / sys).
+ */
+
+#include <dt-bindings/power/allwinner,sun60i-a733-pck-600.h>
+
+/ {
+	gpu_opp_table: gpu-opp-table {
+		compatible = "operating-points-v2";
+
+		opp-400000000 {
+			opp-hz = /bits/ 64 <400000000>;
+			opp-microvolt = <800000>;
+		};
+
+		opp-600000000 {
+			opp-hz = /bits/ 64 <600000000>;
+			opp-microvolt = <800000>;
+		};
+
+		opp-800000000 {
+			opp-hz = /bits/ 64 <800000000>;
+			opp-microvolt = <840000>;
+		};
+
+		opp-1008000000 {
+			opp-hz = /bits/ 64 <1008000000>;
+			opp-microvolt = <960000>;
+		};
+	};
+};
+
+&soc {
+	gpu: gpu@1800000 {
+		compatible = "allwinner,a733-gpu", "img,img-rogue";
+		reg = <0x0 0x01800000 0x0 0x8ffff>;
+		interrupts = <GIC_SPI 63 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 64 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-names = "gpu", "dvfs";
+		/* core=GPU0, mem=PLL_GPU0, sys=BUS_GPU0 */
+		clocks = <&ccu CLK_GPU0>,
+			 <&ccu CLK_PLL_GPU0>,
+			 <&ccu CLK_BUS_GPU0>;
+		clock-names = "core", "mem", "sys";
+		resets = <&ccu RST_BUS_GPU0>;
+		reset-names = "reset_bus";
+		power-domains = <&pck600 PD_GPU_TOP>;
+		operating-points-v2 = <&gpu_opp_table>;
+		status = "disabled";
+	};
+};

@@ -31,6 +31,9 @@ properties:
               - ti,j721s2-gpu
           - const: img,img-bxs-4-64
           - const: img,img-rogue
+      - items:
+          - const: allwinner,a733-gpu
+          - const: img,img-rogue
 
       # This legacy combination of compatible strings was introduced early on
       # before the more specific GPU identifiers were used.
@@ -55,7 +58,14 @@ properties:
     minItems: 1
 
   interrupts:
-    maxItems: 1
+    minItems: 1
+    maxItems: 2
+
+  interrupt-names:
+    items:
+      - const: gpu
+      - const: dvfs
+    minItems: 1
 
   power-domains:
     minItems: 1
@@ -67,10 +77,16 @@ properties:
       - const: b
     minItems: 1
 
-  dma-coherent: true
+	dma-coherent: true
 
   resets:
     maxItems: 1
+
+  reset-names:
+    items:
+      - const: reset_bus
+
+  operating-points-v2: true
 
 required:
   - compatible
@@ -115,6 +131,30 @@ allOf:
                 TH1520 SoC, integrating all internal IP power domains.
         power-domain-names: false
       required:
+        - power-domains
+
+  - if:
+      properties:
+        compatible:
+          contains:
+            const: allwinner,a733-gpu
+    then:
+      properties:
+        clocks:
+          minItems: 3
+        clock-names:
+          minItems: 3
+        interrupts:
+          minItems: 2
+        interrupt-names:
+          minItems: 2
+        power-domains:
+          items:
+            - description: GPU_TOP power domain (PCK-600)
+        power-domain-names: false
+      required:
+        - resets
+        - reset-names
         - power-domains
 
   - if:

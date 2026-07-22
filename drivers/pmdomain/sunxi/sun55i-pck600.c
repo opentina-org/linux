@@ -162,6 +162,7 @@ static int sunxi_pck600_probe(struct platform_device *pdev)
 	for (i = 0; i < desc->num_domains; i++) {
 		struct sunxi_pck600_pd *pd = &pck->pds[i];
 
+		pd->pck = pck;
 		pd->genpd.name = desc->pd_names[i];
 		pd->genpd.power_off = sunxi_pck600_power_off;
 		pd->genpd.power_on = sunxi_pck600_power_on;

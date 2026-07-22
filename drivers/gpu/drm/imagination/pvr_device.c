@@ -307,7 +307,12 @@ pvr_device_irq_init(struct pvr_device *pvr_dev)
 
 	pvr_device_safety_irq_init(pvr_dev);
 
-	pvr_dev->irq = platform_get_irq(plat_dev, 0);
+	/* Prefer named IRQ (A733: "gpu"), else first interrupt. */
+	pvr_dev->irq = platform_get_irq_byname(plat_dev, "gpu");
+	if (pvr_dev->irq < 0)
+		pvr_dev->irq = platform_get_irq_byname(plat_dev, "IRQGPU");
+	if (pvr_dev->irq < 0)
+		pvr_dev->irq = platform_get_irq(plat_dev, 0);
 	if (pvr_dev->irq < 0)
 		return pvr_dev->irq;
 
@@ -402,6 +407,17 @@ pvr_request_firmware(struct pvr_device *pvr_dev)
 	 * instance before returning.
 	 */
 	err = request_firmware(&fw, filename, pvr_dev->base.dev);
+	if (err == -ENOENT || err == -EPROBE_DEFER) {
+		/*
+		 * Built-in (or early module) probe can race rootfs mount.
+		 * Defer so deferred-probe retries after /lib/firmware is visible.
+		 */
+		drm_info_once(drm_dev,
+			      "firmware %s not available yet (%d), deferring\n",
+			      filename, err);
+		kfree(filename);
+		return -EPROBE_DEFER;
+	}
 	if (err) {
 		drm_err(drm_dev, "failed to load firmware %s (err=%d)\n",
 			filename, err);
