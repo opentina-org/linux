@@ -888,6 +888,32 @@
 			};
 		};
 
+		xhci: usb@6a00000 {
+			compatible = "allwinner,sun60i-a733-dwc3";
+			reg = <0x0 0x6a00000 0x0 0x100000>;
+			dr_mode = "otg";
+			clocks = <&ccu CLK_USB2_MF>, <&ccu CLK_USB2_U2_REF>,
+				 <&ccu CLK_USB2_SUSPEND>,
+				 <&ccu CLK_USB2_U3_UTMI>, <&ccu CLK_USB2_U2_PIPE>;
+			clock-names = "bus_clk", "ref_clk", "suspend",
+				      "utmi", "pipe";
+			resets = <&ccu RST_USB_2>;
+			assigned-clocks = <&ccu CLK_USB2_SUSPEND>, <&ccu CLK_USB2_MF>;
+			assigned-clock-rates = <24000000>, <300000000>;
+			interrupts = <GIC_SPI 155 IRQ_TYPE_LEVEL_HIGH>;
+			maximum-speed = "super-speed-plus";
+			phy_type = "utmi";
+			power-domains = <&pck600 PD_USB2>;
+			snps,dis_enblslpm_quirk;
+			snps,dis-u1-entry-quirk;
+			snps,dis-u2-entry-quirk;
+			snps,dis_u2_susphy_quirk;
+			snps,dis_u3_susphy_quirk;
+			phys = <&usbphy 2>, <&combo1_usb>;
+			phy-names = "usb2-phy", "usb3-phy";
+			status = "disabled";
+		};
+
 		r_ccu: r_ccu@7010000 {
 			compatible = "allwinner,sun60iw2-r-ccu";
 			reg = <0x0 0x07010000 0x0 0x340>;
