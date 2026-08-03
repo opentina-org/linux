@@ -774,6 +774,64 @@
 			};
 		};
 
+		serdes: serdes@6c00000 {
+			compatible = "allwinner,cadence-combophy";
+			reg = <0x0 0x06c00000 0x0 0x400>,
+			      <0x0 0x06c06000 0x0 0x2000>,
+			      <0x0 0x0709016c 0x0 0x4>;
+			clocks = <&ccu CLK_SERDES_PHY_CFG>,
+				 <&rtc_ccu CLK_RTC_DCXO_SERDES0>,
+				 <&rtc_ccu CLK_RTC_DCXO_SERDES1>;
+			clock-names = "serdes-clk",
+				      "dcxo-serdes0-clk",
+				      "dcxo-serdes1-clk";
+			ranges;
+			resets = <&ccu RST_BUS_SERDES>;
+			reset-names = "serdes-reset";
+			#address-cells = <2>;
+			#size-cells = <2>;
+			status = "disabled";
+
+			combophy0: combo-phy0@6c01000 {
+				reg = <0x0 0x06c01000 0x0 0xa00>,
+				      <0x0 0x06c80000 0x0 0x20000>;
+
+				combo0_dp: combo0-dp-phy {
+					#phy-cells = <0>;
+					status = "okay";
+				};
+
+				combo0_usb: combo0-usb-phy {
+					#phy-cells = <0>;
+					status = "okay";
+				};
+			};
+
+			combophy1: combo-phy1@6c02000 {
+				reg = <0x0 0x06c02000 0x0 0xa00>,
+				      <0x0 0x06ca0000 0x0 0x20000>;
+
+				combo1_usb: combo1-usb-phy {
+					#phy-cells = <0>;
+					status = "okay";
+				};
+
+				combo1_pcie: combo1-pcie-phy {
+					#phy-cells = <0>;
+					status = "okay";
+				};
+			};
+
+			aux_hpd: aux-hpd@6c01e00 {
+				reg = <0x0 0x06c01e00 0x0 0x200>;
+
+				aux_hpd_phy: aux-hpd-phy {
+					#phy-cells = <0>;
+					status = "okay";
+				};
+			};
+		};
+
 		r_ccu: r_ccu@7010000 {
 			compatible = "allwinner,sun60iw2-r-ccu";
 			reg = <0x0 0x07010000 0x0 0x340>;
