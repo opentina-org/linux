@@ -11,6 +11,7 @@
 #include <dt-bindings/clock/sun60i-a733-rtc.h>
 #include <dt-bindings/clock/sun60i-a733-r-ccu.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/power/allwinner,sun60i-a733-pck-600.h>
 #include <dt-bindings/reset/sun60i-a733-ccu.h>
 #include <dt-bindings/thermal/thermal.h>
 #include <dt-bindings/reset/sun60i-a733-r-ccu.h>
@@ -771,6 +772,61 @@
 			gmac_mtl_tx_setup: tx_queues-config {
 				snps,tx-queues-to-use = <1>;
 				queue0 {};
+			};
+		};
+
+		pcie_rc: pcie@6000000 {
+			compatible = "allwinner,sunxi-pcie-v300-rc";
+			bus-range = <0x0 0xff>;
+			reg = <0 0x06000000 0 0x480000>;
+			reg-names = "dbi";
+			device_type = "pci";
+			clocks =  <&ccu CLK_PCIE0_AUX>,
+				  <&ccu CLK_PCIE0_AXI_SLV>,
+				  <&ccu CLK_ITS_PCIE0_A>;
+			clock-names = "pclk_aux", "pclk_slv", "its";
+			interrupts = <GIC_SPI 152 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 153 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 136 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 137 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 138 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 139 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 140 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 141 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 142 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 143 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "sii", "msi", "edma-w0", "edma-w1", "edma-w2", "edma-w3",
+					  "edma-r0", "edma-r1", "edma-r2", "edma-r3";
+			interrupt-map-mask = <0 0 0 7>;
+			interrupt-map = <0 0 0 1 &pcie_intc 0>,
+					<0 0 0 2 &pcie_intc 1>,
+					<0 0 0 3 &pcie_intc 2>,
+					<0 0 0 4 &pcie_intc 3>;
+			linux,pci-domain = <0>;
+			max-link-speed = <3>;
+			num-edma = <4>;
+			num-lanes = <1>;
+			num-ib-windows = <16>;
+			num-ob-windows = <16>;
+			phys = <&combo1_pcie>;
+			phy-names = "pcie-phy";
+			power-domains = <&pck600 PD_PCIE>;
+			ranges = <0x00000800 0 0x20000000 0x0 0x20000000 0 0x01000000
+				  0x81000000 0 0x21000000 0x0 0x21000000 0 0x01000000
+				  0x82000000 0 0x22000000 0x0 0x22000000 0 0x06000000>;
+			resets = <&ccu RST_BUS_PCIE0>,
+				 <&ccu RST_BUS_PCIE0_PWRUP>,
+				 <&ccu RST_BUS_ITS_PCIE0>;
+			reset-names = "pclk_rst", "pwrup_rst", "its";
+			#address-cells = <3>;
+			#interrupt-cells = <1>;
+			#size-cells = <2>;
+			status = "disabled";
+
+			pcie_intc: legacy-interrupt-controller {
+				interrupt-controller;
+				#address-cells = <0>;
+				#interrupt-cells = <1>;
 			};
 		};
 
