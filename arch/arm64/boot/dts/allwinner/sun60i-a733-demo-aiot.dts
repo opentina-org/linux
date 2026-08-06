@@ -68,6 +68,69 @@
 			sound-dai = <&dmic_codec>;
 		};
 	};
+
+	/*
+	 * AMP / remoteproc / rpmsg shared memory (layout aligned with Tina
+	 * sun60iw2 / a537 demo_aiot). Keep these regions below DRAM end.
+	 */
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		/*
+		 * Name must be "vdev%dbuffer".
+		 * Size >= RPMSG_BUF_SIZE * (vring buffers) * 2
+		 *       = 512 * N * 2
+		 */
+		a55_vdev0buffer: vdev0buffer@4ae00000 {
+			compatible = "shared-dma-pool";
+			reg = <0x0 0x4ae00000 0x0 0x40000>;
+			no-map;
+		};
+
+		/*
+		 * Name must be "vdev%dvring%d".
+		 * See virtio_ring layout in include/uapi/linux/virtio_ring.h.
+		 */
+		a55_vdev0vring0: vdev0vring0@4ae40000 {
+			reg = <0x0 0x4ae40000 0x0 0x2000>;
+			no-map;
+		};
+
+		a55_vdev0vring1: vdev0vring1@4ae42000 {
+			reg = <0x0 0x4ae42000 0x0 0x2000>;
+			no-map;
+		};
+
+		/* Loader places AMP ELF here (boot0/U-Boot or kernel mem-fw). */
+		a55_mem_fw: a55_mem_fw@50000000 {
+			reg = <0x0 0x50000000 0x0 0x00100000>;
+		};
+
+		/* Isolated AMP DRAM (entry / runtime). */
+		a55_reserved: a55_ddr@51000000 {
+			reg = <0x0 0x51000000 0x0 0x00a00000>;
+			no-map;
+		};
+	};
+
+	/* Property bag for sunxi_rproc_arm_boot (cpu-id / entry / load). */
+	sunxi_amp: sunxi-amp {
+		compatible = "sunxi,amp";
+		status = "okay";
+		amp-count = <1>;
+
+		amp0: amp0 {
+			/* cpu7 @ MPIDR 0x700 (A76) */
+			cpu-id = <0x700>;
+			entry-addr = <0x51000000>;
+			load-addr = <0x50000000>;
+			arch = <1>; /* 0: arm, 1: arm64 */
+			image = "amp-arm";
+			boot-stage = "kernel";
+		};
+	};
 };
 
 &pio {
@@ -215,6 +278,39 @@
 };
 
 &uart0 {
+	status = "okay";
+};
+
+&hwspinlock {
+	status = "okay";
+};
+
+/*
+ * Hardware MSGBOX (ARM local_id=0 <-> CPUS).
+ * Channel index = local_n * channels_max + P; channels 0..3 are ARM->CPUS.
+ */
+&msgbox {
+	status = "okay";
+};
+
+/*
+ * Isolated AMP remoteproc on cpu7 + rpmsg virtio, kicked via HW msgbox.
+ * Start manually via sysfs when firmware is ready:
+ *   echo start > /sys/class/remoteproc/remoteproc0/state
+ * Add "auto-boot;" below once bootloader/kernel mem-fw path is verified.
+ */
+&a55_rproc {
+	firmware-name = "amp_rproc";
+	memory-region = <&a55_vdev0buffer>, <&a55_vdev0vring0>,
+			<&a55_vdev0vring1>, <&a55_reserved>;
+	boot-amp = <&amp0>;
+	fw-region = <&a55_mem_fw>;
+	mboxes = <&msgbox 0>;
+	mbox-names = "arm-kick";
+	core-id = <7>;
+	memory-mappings =
+		/* da          len          pa */
+		< 0x40000000  0x40000000  0x40000000 >;
 	status = "okay";
 };
 

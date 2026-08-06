@@ -81,4 +81,42 @@ config RPMSG_VIRTIO
 	select RPMSG_NS
 	select VIRTIO
 
+config AW_RPMSG_VIRTIO
+	tristate "Allwinner Virtio RPMSG bus driver"
+	depends on HAS_DMA
+	depends on ARCH_SUNXI || COMPILE_TEST
+	select RPMSG
+	select RPMSG_NS
+	select VIRTIO
+	help
+	  Allwinner-enhanced virtio rpmsg bus (Tina BSP). Do not enable together
+	  with RPMSG_VIRTIO on the same system.
+
+config AW_RPMSG_CTRL
+	tristate "Allwinner rpmsg ctrl driver"
+	depends on ARCH_SUNXI || COMPILE_TEST
+	select RPMSG_VIRTIO if !AW_RPMSG_VIRTIO
+	help
+	  Export Allwinner rpmsg ctrl device nodes under /dev for userspace
+	  endpoint creation (Tina BSP rpmsg_master / rpmsg_client).
+
+config AW_RPMSG_CLASS
+	bool "Allwinner rpmsg class"
+	depends on AW_RPMSG_CTRL
+	default y
+
+config AW_RPMSG_NOTIFY
+	tristate "Allwinner rpmsg notify driver"
+	depends on ARCH_SUNXI || COMPILE_TEST
+	select RPMSG_VIRTIO if !AW_RPMSG_VIRTIO
+	help
+	  Notification mechanism based on rpmsg (Tina BSP).
+
+config AW_RPMSG_HEARTBEAT
+	tristate "Allwinner RPMSG heartbeat driver"
+	depends on ARCH_SUNXI || COMPILE_TEST
+	select RPMSG_VIRTIO if !AW_RPMSG_VIRTIO
+	help
+	  Watchdog-style heartbeat over rpmsg for remote processors.
+
 endmenu

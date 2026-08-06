@@ -378,6 +378,35 @@ config XLNX_R5_REMOTEPROC
 
 	  It's safe to say N if not interested in using RPU r5f cores.
 
+config AW_REMOTEPROC
+	tristate "Remoteproc support for Allwinner A733 AMP"
+	depends on ARCH_SUNXI || COMPILE_TEST
+	select MAILBOX
+	help
+	  Support isolated ARM/ARM64 AMP remote processors on Allwinner A733
+	  (sun60iw2) via the remoteproc framework (Tina BSP port).
+
+config AW_RPROC_FAST_BOOT
+	bool "Allwinner remoteproc fast boot mode"
+	depends on AW_REMOTEPROC
+	default n
+	help
+	  Speed up remoteproc init when firmware is already in reserved memory.
+
+config AW_RPROC_ENHANCED_TRACE
+	bool "Allwinner remoteproc enhanced trace"
+	depends on AW_REMOTEPROC
+	default y
+	help
+	  Enhanced trace / crash dump helpers for Allwinner remoteproc.
+
+config AW_REMOTEPROC_ARM_BOOT
+	tristate "Allwinner ARM/ARM64 AMP remoteproc boot"
+	depends on AW_REMOTEPROC
+	default y if ARCH_SUNXI
+	help
+	  Boot ops for isolated ARM/ARM64 AMP cores on A733 (a55_rproc).
+
 endif # REMOTEPROC
 
 endmenu

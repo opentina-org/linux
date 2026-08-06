@@ -40,3 +40,14 @@ obj-$(CONFIG_TI_K3_DSP_REMOTEPROC)	+= ti_k3_dsp_remoteproc.o ti_k3_common.o
 obj-$(CONFIG_TI_K3_M4_REMOTEPROC)	+= ti_k3_m4_remoteproc.o ti_k3_common.o
 obj-$(CONFIG_TI_K3_R5_REMOTEPROC)	+= ti_k3_r5_remoteproc.o ti_k3_common.o
 obj-$(CONFIG_XLNX_R5_REMOTEPROC)	+= xlnx_r5_remoteproc.o
+
+# Allwinner A733 / sun60iw2 remoteproc (ARM AMP)
+ccflags-$(CONFIG_AW_REMOTEPROC)		+= -I$(src)
+obj-$(CONFIG_AW_REMOTEPROC_ARM_BOOT)	+= sunxi_rproc_arm_boot.o
+obj-$(CONFIG_AW_REMOTEPROC)		+= sunxi_remoteproc.o
+sunxi_remoteproc-y			:= sunxi_rproc.o
+sunxi_remoteproc-y			+= sunxi_rproc_boot.o
+sunxi_remoteproc-y			+= sunxi_rproc_standby.o
+sunxi_remoteproc-y			+= sunxi_rproc_firmware.o
+sunxi_remoteproc-y			+= sunxi_rproc_load_partition.o
+sunxi_remoteproc-$(CONFIG_AW_RPROC_ENHANCED_TRACE) += sunxi_rproc_trace.o

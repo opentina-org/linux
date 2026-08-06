@@ -1157,6 +1157,16 @@
 			status = "disabled";
 		};
 
+		/*
+		 * Isolated AMP remoteproc (Tina: allwinner,arm64-rproc).
+		 * Board DTS must supply memory-region / mboxes / core-id before
+		 * enabling. Prefer hardware msgbox (<&msgbox N>, N = 0..3).
+		 */
+		a55_rproc: a55_rproc@0 {
+			compatible = "allwinner,arm64-rproc";
+			status = "disabled";
+		};
+
 		spi0: spi@2540000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
