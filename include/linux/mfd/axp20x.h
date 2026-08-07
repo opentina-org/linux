@@ -171,6 +171,8 @@ enum axp20x_variants {
 #define AXP318_POWER_REASON		0x50
 #define AXP318_SHUTDOWN_REASON		0x51
 #define AXP318_SHUTDOWN_CTRL		0x52
+#define AXP318_POWEROFF_SOURCE_EN2	0x53
+#define AXP318_PONLEVEL_SET		0x57	/* PEK timing (Tina AXP8191) */
 #define AXP318_TEMP_ADC_H_EN		0x65
 #define AXP318_TEMP_ADC_L		0x66
 #define AXP318_DIE_TEMP_ADC_H_EN	0x67
@@ -179,6 +181,7 @@ enum axp20x_variants {
 #define AXP318_GPIO_CTRL		0x70
 #define AXP318_GPIO_INPUT		0x71
 #define AXP318_WDOG_CTRL		0x77
+
 
 #define AXP717_ON_INDICATE		0x00
 #define AXP717_PMU_STATUS_2		0x01
@@ -944,6 +947,7 @@ enum axp318_irqs {
 	AXP318_IRQ_GPIO3_INPUT,
 	AXP318_IRQ_WDOG_EXPIRE = 24,
 };
+
 
 enum axp717_irqs {
 	AXP717_IRQ_VBUS_FAULT,

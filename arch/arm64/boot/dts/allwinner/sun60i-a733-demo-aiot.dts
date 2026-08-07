@@ -1,11 +1,7 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR MIT)
-/*
- * Copyright (C) 2015-2025 Allwinner Technology Co., Ltd.
- * Author: Yao Zi <me@ziyao.cc>
- */
-
 #include "sun60i-a733.dtsi"
 #include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/usb/pd.h>
 
 / {
 	compatible = "allwinner,a733-demo-aiot", "allwinner,a733";
@@ -13,9 +9,12 @@
 
 	aliases {
 		serial0 = &uart0;
+		pwm0 = &pwm0;
+		spi0 = &spi0;
 	};
 
 	chosen {
+		bootargs = "earlycon regulator_ignore_unused";
 		stdout-path = "serial0:115200n8";
 	};
 
@@ -26,11 +25,14 @@
 		regulator-max-microvolt = <5000000>;
 	};
 
-	reg_3v3: regulator-fixed-3v3 {
+	/* Type-C VBUS switch (Tina: PL5) */
+	reg_usb0_vbus: usb0-vbus {
 		compatible = "regulator-fixed";
-		regulator-name = "fixed-3v3";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
+		regulator-name = "usb0-vbus";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		gpio = <&r_pio 0 5 GPIO_ACTIVE_HIGH>; /* PL5 */
+		enable-active-high;
 	};
 
 	sound_i2s0: sound {
@@ -133,11 +135,62 @@
 	};
 };
 
+&gmac {
+	assigned-clocks = <&ccu CLK_GMAC0_PHY>;
+	assigned-clock-rates = <25000000>;
+	tx-internal-delay-ps = <1000>;
+	rx-internal-delay-ps = <2000>;
+	phy-mode = "rgmii";
+	phy-handle = <&rgmii_phy>;
+	status = "okay";
+};
+
+&mdio {
+	status = "okay";
+
+	rgmii_phy: phy@1 {
+		compatible = "ethernet-phy-id001c.c916",
+			     "ethernet-phy-ieee802.3-c22";
+		reg = <1>;
+		assigned-clocks = <&ccu CLK_GMAC0_PHY>;
+		assigned-clock-rates = <25000000>;
+		clocks = <&ccu CLK_GMAC0_PHY>;
+		reset-gpios = <&pio 7 16 GPIO_ACTIVE_LOW>;
+		reset-assert-us = <10000>;
+		reset-deassert-us = <30000>;
+	};
+};
+
+&mmc0 {
+	bus-width = <4>;
+	disable-wp;
+	cd-gpios = <&pio 5 6 GPIO_ACTIVE_LOW>;
+	vmmc-supply = <&swout2>;
+	vqmmc-supply = <&cldo5>;
+	status = "okay";
+};
+
 &pio {
 	uart0_pins: uart0_pins {
 		pins = "PB9", "PB10";
 		function = "uart0";
+		allwinner,pinmux = <2>;
 		drive-strength = <10>;
+	};
+
+	pwm0_0_active: pwm0_0_active {
+		pins = "PD0";
+		function = "pwm0_0";
+		allwinner,pinmux = <7>;
+		drive-strength = <10>;
+		bias-disable;
+	};
+
+	pwm0_0_sleep: pwm0_0_sleep {
+		pins = "PD0";
+		function = "gpio_in";
+		allwinner,pinmux = <0>;
+		bias-pull-down;
 	};
 };
 
@@ -145,6 +198,7 @@
 	s_i2c0_pins: s_i2c0_pins {
 		pins = "PL0", "PL1";
 		function = "s_twi0";
+		allwinner,pinmux = <2>;
 		drive-strength = <10>;
 	};
 };
@@ -157,8 +211,11 @@
 	axp318: pmic@36 {
 		compatible = "x-powers,axp318w";
 		reg = <0x36>;
+		interrupt-parent = <&nmi_intc>;
+		interrupts = <0 IRQ_TYPE_LEVEL_LOW>;
 		#interrupt-cells = <1>;
 		interrupt-controller;
+		wakeup-source;
 
 		vin19-supply = <&reg_5v>;
 		vin23-supply = <&reg_5v>;
@@ -198,6 +255,7 @@
 				regulator-always-on;
 			};
 
+			/* IO / MMC I/O */
 			cldo5: cldo5 {
 				regulator-name = "cldo5";
 				regulator-min-microvolt = <1800000>;
@@ -210,6 +268,31 @@
 				regulator-name = "swout2";
 				regulator-min-microvolt = <3300000>;
 				regulator-max-microvolt = <3300000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			/* Always-on rails kept enabled by firmware / board */
+			dcdc1: dcdc1 {
+				regulator-name = "dcdc1";
+				regulator-min-microvolt = <1000000>;
+				regulator-max-microvolt = <3400000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			dcdc4: dcdc4 {
+				regulator-name = "dcdc4";
+				regulator-min-microvolt = <500000>;
+				regulator-max-microvolt = <1540000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			dcdc6: dcdc6 {
+				regulator-name = "dcdc6";
+				regulator-min-microvolt = <500000>;
+				regulator-max-microvolt = <1540000>;
 				regulator-boot-on;
 				regulator-always-on;
 			};
@@ -229,6 +312,37 @@
 				regulator-boot-on;
 				regulator-always-on;
 			};
+		};
+	};
+
+	/*
+	 * Hynetek HUSB311 Type-C / PD controller (RT1711H-compatible).
+	 * Tina board: s_twi0 @0x4e, IRQ on PL10, VBUS on PL5.
+	 * DP altmode / USB role-switch wiring deferred until USBDP PHY is ported.
+	 */
+	husb311: typec@4e {
+		compatible = "hynetek,husb311", "richtek,rt1711h";
+		reg = <0x4e>;
+		interrupt-parent = <&r_pio>;
+		interrupts = <0 10 IRQ_TYPE_LEVEL_LOW>; /* PL10 */
+		vbus-supply = <&reg_usb0_vbus>;
+		wakeup-source;
+		status = "okay";
+
+		connector {
+			compatible = "usb-c-connector";
+			label = "USB-C";
+			data-role = "dual";
+			power-role = "dual";
+			try-power-role = "sink";
+			op-sink-microwatt = <1000000>;
+			source-pdos =
+				<PDO_FIXED(5000, 500,
+					   PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP)>;
+			sink-pdos =
+				<PDO_FIXED(5000, 500,
+					   PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP)
+				 PDO_VAR(5000, 5000, 2000)>;
 		};
 	};
 };
@@ -267,18 +381,16 @@
 	cpu-supply = <&reg_dcdc3>;
 };
 
-&mmc0 {
-	/* Missing v(q)mmc-supply which is SWOUT2/CLDO3 of AXP318 */
-	bus-width = <4>;
-	disable-wp;
-	cd-gpios = <&pio 5 6 GPIO_ACTIVE_LOW>;
-	vmmc-supply = <&swout2>;
-	vqmmc-supply = <&cldo5>;
+&uart0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart0_pins>;
 	status = "okay";
 };
 
-&uart0 {
-	status = "okay";
+&pwm0_0 {
+	pinctrl-0 = <&pwm0_0_active>;
+    pinctrl-1 = <&pwm0_0_sleep>;
+    status = "okay";
 };
 
 &hwspinlock {
@@ -312,6 +424,14 @@
 		/* da          len          pa */
 		< 0x40000000  0x40000000  0x40000000 >;
 	status = "okay";
+};
+
+&spi0 {
+    status = "okay";
+};
+
+&rtc {
+    status = "okay";
 };
 
 /*

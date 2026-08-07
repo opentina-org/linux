@@ -6,6 +6,7 @@
 
 #include "sun60i-a733.dtsi"
 #include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/irq.h>
 
 / {
 	compatible = "radxa,a7a", "allwinner,a733";
@@ -19,24 +20,167 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	reg_3v3: regulator-fixed-3v3 {
+	reg_5v: regulator-5v0 {
 		compatible = "regulator-fixed";
-		regulator-name = "fixed-3v3";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
+		regulator-name = "VCC5V0_SYS";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+	};
+
+	reg_5v_usb30_otg: regulator-5v0-usb30-otg {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&r_pio 0 2 GPIO_ACTIVE_HIGH>;
+		regulator-name = "VCC5V0_USB30_OTG";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		vin-supply = <&reg_5v>;
 	};
 };
 
+&ehci1 {
+	status = "okay";
+};
+
+&ohci1 {
+	status = "okay";
+};
+
+&pio {
+	uart0_pins: uart0_pins {
+		pins = "PB9", "PB10";
+		function = "uart0";
+		allwinner,pinmux = <2>;
+		drive-strength = <10>;
+	};
+};
+
+&r_pio {
+	s_i2c0_pins: s_i2c0_pins {
+		pins = "PL0", "PL1";
+		function = "s_twi0";
+		allwinner,pinmux = <2>;
+		drive-strength = <10>;
+	};
+};
+
+&s_i2c0 {
+	pinctrl-0 = <&s_i2c0_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	axp318: pmic@36 {
+		compatible = "x-powers,axp318w";
+		reg = <0x36>;
+		interrupt-parent = <&nmi_intc>;
+		interrupts = <0 IRQ_TYPE_LEVEL_LOW>;
+		#interrupt-cells = <1>;
+		interrupt-controller;
+		wakeup-source;
+
+		vin19-supply = <&reg_5v>;
+		vin23-supply = <&reg_5v>;
+		vin45-supply = <&reg_5v>;
+		vin678-supply = <&reg_5v>;
+		dldoin-supply = <&reg_5v>;
+		cldoin-supply = <&reg_5v>;
+		swin-supply = <&reg_5v>;
+
+		regulators {
+			reg_dcdc2: dcdc2 {
+				regulator-name = "vdd-sys";
+				regulator-min-microvolt = <800000>;
+				regulator-max-microvolt = <800000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			reg_dcdc3: dcdc3 {
+				regulator-name = "vdd-cpub";
+				regulator-min-microvolt = <800000>;
+				regulator-max-microvolt = <1100000>;
+				regulator-ramp-delay = <25000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			reg_dcdc5: dcdc5 {
+				regulator-name = "vdd-cpul";
+				regulator-min-microvolt = <800000>;
+				regulator-max-microvolt = <1100000>;
+				regulator-ramp-delay = <25000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			cldo5: cldo5 {
+				regulator-name = "cldo5";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			swout2: swout2 {
+				regulator-name = "swout2";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+		};
+	};
+};
+
+&cpu0 {
+	cpu-supply = <&reg_dcdc5>;
+};
+
+&cpu1 {
+	cpu-supply = <&reg_dcdc5>;
+};
+
+&cpu2 {
+	cpu-supply = <&reg_dcdc5>;
+};
+
+&cpu3 {
+	cpu-supply = <&reg_dcdc5>;
+};
+
+&cpu4 {
+	cpu-supply = <&reg_dcdc5>;
+};
+
+&cpu5 {
+	cpu-supply = <&reg_dcdc5>;
+};
+
+&cpu6 {
+	cpu-supply = <&reg_dcdc3>;
+};
+
+&cpu7 {
+	cpu-supply = <&reg_dcdc3>;
+};
+
 &uart0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart0_pins>;
+	status = "okay";
+};
+
+&usbphy {
+	usb1_vbus-supply = <&reg_5v_usb30_otg>;
 	status = "okay";
 };
 
 &mmc0 {
-	/* Missing v(q)mmc-supply which is SWOUT2/CLDO3 of AXP318 */
 	bus-width = <4>;
 	disable-wp;
 	cd-gpios = <&pio 5 6 GPIO_ACTIVE_LOW>;
-	vmmc-supply = <&reg_3v3>;
+	vmmc-supply = <&swout2>;
+	vqmmc-supply = <&cldo5>;
 	status = "okay";
 };
 

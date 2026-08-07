@@ -30,11 +30,16 @@
 #define AXP20X_PEK_STARTUP_MASK		(0xc0)
 #define AXP20X_PEK_SHUTDOWN_MASK	(0x03)
 
+/* AXP318W / AXP8191 PONLEVEL_SET (0x57): on=[1:0], off=[3:2] */
+#define AXP318_PEK_STARTUP_MASK		(0x03)
+#define AXP318_PEK_SHUTDOWN_MASK	(0x0c)
+
 struct axp20x_info {
 	const struct axp20x_time *startup_time;
 	unsigned int startup_mask;
 	const struct axp20x_time *shutdown_time;
 	unsigned int shutdown_mask;
+	unsigned int pek_reg;
 };
 
 struct axp20x_pek {
@@ -76,6 +81,7 @@ static const struct axp20x_info axp20x_info = {
 	.startup_mask = AXP20X_PEK_STARTUP_MASK,
 	.shutdown_time = shutdown_time,
 	.shutdown_mask = AXP20X_PEK_SHUTDOWN_MASK,
+	.pek_reg = AXP20X_PEK_KEY,
 };
 
 static const struct axp20x_info axp221_info = {
@@ -83,6 +89,22 @@ static const struct axp20x_info axp221_info = {
 	.startup_mask = AXP20X_PEK_STARTUP_MASK,
 	.shutdown_time = shutdown_time,
 	.shutdown_mask = AXP20X_PEK_SHUTDOWN_MASK,
+	.pek_reg = AXP20X_PEK_KEY,
+};
+
+static const struct axp20x_time axp318_startup_time[] = {
+	{ .time = 128,  .idx = 0 },
+	{ .time = 512,  .idx = 1 },
+	{ .time = 1000, .idx = 2 },
+	{ .time = 2000, .idx = 3 },
+};
+
+static const struct axp20x_info axp318_info = {
+	.startup_time = axp318_startup_time,
+	.startup_mask = AXP318_PEK_STARTUP_MASK,
+	.shutdown_time = shutdown_time,
+	.shutdown_mask = AXP318_PEK_SHUTDOWN_MASK,
+	.pek_reg = AXP318_PONLEVEL_SET,
 };
 
 static ssize_t axp20x_show_attr(struct device *dev,
@@ -93,7 +115,8 @@ static ssize_t axp20x_show_attr(struct device *dev,
 	unsigned int val;
 	int ret, i;
 
-	ret = regmap_read(axp20x_pek->axp20x->regmap, AXP20X_PEK_KEY, &val);
+	ret = regmap_read(axp20x_pek->axp20x->regmap, axp20x_pek->info->pek_reg,
+			  &val);
 	if (ret != 0)
 		return ret;
 
@@ -155,8 +178,8 @@ static ssize_t axp20x_store_attr(struct device *dev,
 	}
 
 	idx <<= ffs(mask) - 1;
-	ret = regmap_update_bits(axp20x_pek->axp20x->regmap, AXP20X_PEK_KEY,
-				 mask, idx);
+	ret = regmap_update_bits(axp20x_pek->axp20x->regmap,
+				 axp20x_pek->info->pek_reg, mask, idx);
 	if (ret != 0)
 		return -EINVAL;
 
@@ -313,14 +336,13 @@ static int axp20x_pek_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	axp20x_pek->axp20x = dev_get_drvdata(pdev->dev.parent);
+	axp20x_pek->info = (struct axp20x_info *)match->driver_data;
 
 	if (axp20x_pek_should_register_input(axp20x_pek)) {
 		error = axp20x_pek_probe_input_device(axp20x_pek, pdev);
 		if (error)
 			return error;
 	}
-
-	axp20x_pek->info = (struct axp20x_info *)match->driver_data;
 
 	platform_set_drvdata(pdev, axp20x_pek);
 
@@ -392,6 +414,10 @@ static const struct platform_device_id axp_pek_id_match[] = {
 	{
 		.name = "axp221-pek",
 		.driver_data = (kernel_ulong_t)&axp221_info,
+	},
+	{
+		.name = "axp318w-pek",
+		.driver_data = (kernel_ulong_t)&axp318_info,
 	},
 	{ /* sentinel */ }
 };

@@ -727,6 +727,8 @@ patternProperties:
     description: Hydis Technologies
   "^hynitron,.*":
     description: Shanghai Hynitron Microelectronics Co. Ltd.
+  "^hynetek,.*":
+    description: Hynetek Semiconductor Co., Ltd.
   "^hynix,.*":
     description: SK Hynix Inc.
   "^hyundai,.*":

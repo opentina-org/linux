@@ -241,6 +241,7 @@ static int __init sun9i_nmi_irq_init(struct device_node *node,
 	return sunxi_sc_nmi_irq_init(node, &sun9i_data);
 }
 IRQCHIP_DECLARE(sun9i_nmi, "allwinner,sun9i-a80-nmi", sun9i_nmi_irq_init);
+IRQCHIP_DECLARE(sun60i_a733_nmi, "allwinner,sun60i-a733-nmi", sun9i_nmi_irq_init);
 
 static int __init sun55i_nmi_irq_init(struct device_node *node,
 				      struct device_node *parent)

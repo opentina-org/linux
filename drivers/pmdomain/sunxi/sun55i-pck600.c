@@ -168,6 +168,16 @@ static int sunxi_pck600_probe(struct platform_device *pdev)
 		pd->genpd.power_on = sunxi_pck600_power_on;
 		pd->base = base + PPU_REG_SIZE * i;
 
+		/*
+		 * Tina leaves GPU_CORE out of the DT power-controller (see
+		 * sun60iw2p1.dtsi). Firmware/GPU driver poke that PPU
+		 * directly; genpd powering it off at unused-domain sync
+		 * times out (-ETIMEDOUT). Keep the index for bindings but
+		 * never idle it from software.
+		 */
+		if (!strcmp(desc->pd_names[i], "GPU_CORE"))
+			pd->genpd.flags |= GENPD_FLAG_ALWAYS_ON;
+
 		sunxi_pck600_pd_setup(pd, desc);
 		ret = pm_genpd_init(&pd->genpd, NULL, false);
 		if (ret) {

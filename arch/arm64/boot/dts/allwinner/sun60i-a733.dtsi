@@ -765,6 +765,20 @@
 			#reset-cells = <1>;
 		};
 
+		/*
+		 * PMIC NMI (Tina sun60iw2: SPI 188). Register layout matches
+		 * sun9i (ctrl=0x00, enable=0x04, pend=0x08); Tina BSP used
+		 * allwinner,sun8i-nmi with the same offsets.
+		 */
+		nmi_intc: interrupt-controller@7010320 {
+			compatible = "allwinner,sun60i-a733-nmi",
+				     "allwinner,sun9i-a80-nmi";
+			reg = <0x0 0x07010320 0x0 0xc>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			interrupts = <GIC_SPI 188 IRQ_TYPE_LEVEL_HIGH>;
+		};
+
 		r_pio: pinctrl@7025000 {
 			compatible = "allwinner,sun60i-a733-r-pinctrl";
 			reg = <0x0 0x07025000 0x0 0x410>;
@@ -781,9 +795,9 @@
 		s_i2c0: i2c@7083000 {
 			compatible = "allwinner,sun6i-a31-i2c";
 			reg = <0x0 0x07083000 0x0 0x400>;
-			clocks = <&ccu CLK_R_TWI0>;
+			clocks = <&r_ccu CLK_R_TWI0>;
 			interrupts = <GIC_SPI 203 IRQ_TYPE_LEVEL_HIGH>;
-			resets = <&ccu RST_BUS_R_TWI0>;
+			resets = <&r_ccu RST_BUS_R_TWI0>;
 			#address-cells = <1>;
 			#size-cells = <0>;
 			status = "disabled";
@@ -792,9 +806,9 @@
 		s_i2c1: i2c@7084000 {
 			compatible = "allwinner,sun6i-a31-i2c";
 			reg = <0x0 0x07084000 0x0 0x400>;
-			clocks = <&ccu CLK_R_TWI1>;
+			clocks = <&r_ccu CLK_R_TWI1>;
 			interrupts = <GIC_SPI 204 IRQ_TYPE_LEVEL_HIGH>;
-			resets = <&ccu RST_BUS_R_TWI1>;
+			resets = <&r_ccu RST_BUS_R_TWI1>;
 			#address-cells = <1>;
 			#size-cells = <0>;
 			status = "disabled";
@@ -803,9 +817,9 @@
 		s_i2c2: i2c@7085000 {
 			compatible = "allwinner,sun6i-a31-i2c";
 			reg = <0x0 0x07085000 0x0 0x400>;
-			clocks = <&ccu CLK_R_TWI2>;
+			clocks = <&r_ccu CLK_R_TWI2>;
 			interrupts = <GIC_SPI 205 IRQ_TYPE_LEVEL_HIGH>;
-			resets = <&ccu RST_BUS_R_TWI2>;
+			resets = <&r_ccu RST_BUS_R_TWI2>;
 			#address-cells = <1>;
 			#size-cells = <0>;
 			status = "disabled";
