@@ -87,10 +87,17 @@
 		swin-supply = <&reg_5v>;
 
 		regulators {
+			/*
+			 * System fabric + NPU share DCDC2. Do NOT force 960 mV
+			 * here: AXP apply_uV ("Bringing 800000uV into 960000")
+			 * hangs this board. Keep 800 mV; vipcore/galcore clamp
+			 * NPU to 852 MHz (vf0200 OPP at 800 mV).
+			 */
 			reg_dcdc2: dcdc2 {
 				regulator-name = "vdd-sys";
 				regulator-min-microvolt = <800000>;
 				regulator-max-microvolt = <800000>;
+				regulator-ramp-delay = <250>;
 				regulator-boot-on;
 				regulator-always-on;
 			};
@@ -185,5 +192,10 @@
 };
 
 &gpu {
+	status = "okay";
+};
+
+&npu {
+	npu-supply = <&reg_dcdc2>;
 	status = "okay";
 };

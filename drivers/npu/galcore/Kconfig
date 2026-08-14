@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: GPL-2.0
+
+config AW_NNA_GALCORE
+	tristate "Allwinner A733 NNA galcore (Vivante GAL) driver"
+	depends on ARCH_SUNXI || COMPILE_TEST
+	depends on OF
+	depends on NVMEM
+	select SYNC_FILE
+	select ARCH_SUN60IW2
+	default n
+	help
+	  Optional Vivante galcore NPU driver (module galcore) for A733.
+	  Compatible with the same DT node as AW_NNA_VIP (allwinner,npu).
+	  Do not load vipcore and galcore against the same device at once.

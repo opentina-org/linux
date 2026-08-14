@@ -177,6 +177,8 @@ source "drivers/iommu/Kconfig"
 
 source "drivers/remoteproc/Kconfig"
 
+source "drivers/npu/Kconfig"
+
 source "drivers/rpmsg/Kconfig"
 
 source "drivers/soundwire/Kconfig"

@@ -3,23 +3,23 @@
 # Allwinner sun60i VIN (CSI / MIPI / ISP / VIPP) for A733 / sun60iw2
 #
 
+config ARCH_SUN60IW2
+	bool
+	help
+	  Select sun60iw2 register layout used by VIN, cedar-ve, NPU, etc.
+
 menuconfig VIDEO_SUN60I_VIN
 	tristate "Allwinner sun60i VIN (CSI/MIPI/ISP/VIPP) camera driver"
 	depends on ARCH_SUNXI || COMPILE_TEST
 	depends on VIDEO_DEV
 	depends on MEDIA_CAMERA_SUPPORT
 	select VIDEOBUF2_DMA_CONTIG
+	select ARCH_SUN60IW2
 	help
 	  Hawkview video input pipeline for Allwinner A733 (sun60iw2):
 	  MIPI CSI-2 combo PHY, CSI parser, ISP600, VIPP scaler, and VIN DMA.
 
 if VIDEO_SUN60I_VIN
-
-config ARCH_SUN60IW2
-	bool
-	default y
-	help
-	  Select sun60iw2 register layout and combo CSI / ISP600 backends.
 
 config CSI_VIN
 	tristate "V4L2 VIN core"

@@ -1,0 +1,69 @@
+# SPDX-License-Identifier: GPL-2.0
+# Linux build file for A733 VIPLite (vipcore)
+#
+
+MODULE_NAME ?= vipcore
+
+export USE_LINUX_PLATFORM_DEVICE=1
+export AUTO_CORRECT_CONFLICTS=1
+
+ccflags-y += -Wno-unused-function
+ccflags-y += -I$(srctree)/drivers/npu/include
+ccflags-y += -I$(srctree)/$(src) \
+		-I$(srctree)/$(src)/inc \
+		-I$(srctree)/$(src)/memory \
+		-I$(srctree)/$(src)/allocator \
+		-I$(srctree)/$(src)/platform \
+		-I$(srctree)/$(src)/task
+ccflags-y += -include npu_linux_compat.h
+ccflags-y += -DLINUX -DDRIVER
+# Match Tina: VIP MMU on (NPU_USER_IOMMU=0). Hang root cause was SYSCTRL SRAM mux.
+ccflags-y += -DNPU_USER_IOMMU=0
+ccflags-y += -DUSE_LINUX_PLATFORM_DEVICE
+
+ifeq ($(DEBUG), 1)
+ccflags-y += -DDBG=1 -DDEBUG -D_DEBUG -DvpmdENABLE_DEBUG_LOG=4
+else
+ccflags-y += -DDBG=0
+endif
+
+ifneq ($(AUTO_CORRECT_CONFLICTS), )
+ccflags-y += -DvpmdAUTO_CORRECT_CONFLICTS=$(AUTO_CORRECT_CONFLICTS)
+endif
+
+OBJS := vip_drv_interface.o \
+	vip_drv_hardware.o \
+	vip_drv_device.o \
+	vip_drv_context.o \
+	vip_drv_debug.o \
+	vip_drv_util.o \
+	vip_drv_pm.o \
+	vip_drv_device_driver.o \
+	vip_drv_os.o \
+	vip_drv_os_debug.o \
+	memory/vip_drv_mem_heap.o \
+	memory/vip_drv_mmu.o \
+	memory/vip_drv_video_memory.o \
+	memory/vip_drv_mem_allocator.o \
+	task/vip_drv_task_descriptor.o \
+	task/vip_drv_task_schedule.o \
+	task/vip_drv_task_parallel_async.o \
+	task/vip_drv_task_serial_sync.o \
+	task/vip_drv_task_parallel_sync.o \
+	task/vip_drv_task_single.o \
+	task/vip_drv_task_common.o \
+	task/vip_drv_task_debug.o \
+	allocator/vip_drv_mem_allocator_common.o \
+	allocator/vip_drv_mem_allocator_heap_reserved.o \
+	allocator/vip_drv_mem_allocator_heap_exclusive.o \
+	allocator/vip_drv_mem_allocator_continue.o \
+	allocator/vip_drv_mem_allocator_segment_continue.o \
+	allocator/vip_drv_mem_allocator_gfp.o \
+	allocator/vip_drv_mem_allocator_cma.o \
+	allocator/vip_drv_mem_allocator_wrap_user_physical.o \
+	allocator/vip_drv_mem_allocator_wrap_user_memory.o \
+	allocator/vip_drv_mem_allocator_wrap_dma_buf.o \
+	platform/vip_drv_device_platform.o
+
+obj-$(CONFIG_AW_NNA_VIP) = $(MODULE_NAME).o
+$(MODULE_NAME)-objs = $(OBJS)

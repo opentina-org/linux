@@ -1,0 +1,43 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+/*
+ * Allwinner A733 (sun60iw2) NPU / NNA device tree fragment.
+ * Ported from tina_ref bsp sun60iw2p1.dtsi (npu@3600000).
+ */
+
+#include <dt-bindings/power/allwinner,sun60i-a733-pck-600.h>
+
+&soc {
+	npu: npu@3600000 {
+		compatible = "allwinner,npu";
+		reg = <0x0 0x03600000 0x0 0x20000>;
+		device_type = "npu";
+		dev_name = "npu";
+		interrupts = <GIC_SPI 65 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-names = "npu";
+		clocks = <&ccu CLK_NPU>,
+			 <&ccu CLK_PLL_NPU>,
+			 <&ccu CLK_BUS_NPU>,
+			 <&ccu CLK_MBUS_NPU_GATE>,
+			 <&ccu CLK_NPU_AHB_GATE>;
+		clock-names = "clk_npu", "clk_parent", "clk_bus",
+			      "clk_mbus_gate", "clk_ahb_gate";
+		operating-points-v2 = <&npu_opp_table>;
+		resets = <&ccu RST_BUS_NPU_CORE>,
+			 <&ccu RST_BUS_NPU_AXI>,
+			 <&ccu RST_BUS_NPU_AHB>;
+		reset-names = "npu_rst", "npu_axi_rst", "npu_ahb_rst";
+		power-domains = <&pck600 PD_NPU>;
+		nvmem-cells = <&dvfs_word>;
+		nvmem-cell-names = "dvfs";
+		/*
+		 * No 800 MHz OPP; nearest at VF0200 @ 800 mV is 852.
+		 * (1008 needs ~960 mV — do not raise shared vdd-sys from Linux.)
+		 * Hang at 852 was SYSCTRL SRAM mux, now fixed in vipcore.
+		 */
+		npu-vf = <852>;
+		npu-vfgear = <0>;
+		/* npu-supply = vdd-sys @ 800 mV; keep setvol off. */
+		npu-setvol = <0>;
+		status = "disabled";
+	};
+};

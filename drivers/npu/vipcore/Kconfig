@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: GPL-2.0
+
+config AW_NNA_VIP
+	tristate "Allwinner A733 NNA VIP2 (Vivante VIPLite) driver"
+	depends on ARCH_SUNXI || COMPILE_TEST
+	depends on OF
+	depends on NVMEM
+	select DMA_SHARED_BUFFER
+	select PM_OPP
+	select PM_DEVFREQ
+	select DEVFREQ_GOV_SIMPLE_ONDEMAND
+	select DEVFREQ_THERMAL
+	select ARCH_SUN60IW2
+	default n
+	help
+	  Vivante VIPLite v2 driver (module vipcore) for Allwinner A733
+	  / sun60iw2 on-chip NPU. Compatible with DT node "allwinner,npu".
+	  DVFS grade is read from SID via the existing nvmem sunxi_sid
+	  provider (nvmem-cell "dvfs").
+
+config NPU_SET_CLK_VOL
+	bool "NPU set clock / voltage from driver"
+	depends on AW_NNA_VIP
+	default n
+	help
+	  Allow the VIP platform driver to program NPU clock and voltage
+	  without clk_round_rate clamping.
