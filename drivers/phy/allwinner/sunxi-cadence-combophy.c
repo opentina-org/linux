@@ -4201,7 +4201,8 @@ static int sunxi_cadence_phy_parse_dt(struct platform_device *pdev)
 	/* serdes 1.8V AVDD-H-COMB0 supply */
 	sunxi_cphy->serdes1v8_supply = devm_regulator_get_optional(dev, "serdes1v8");
 	if (IS_ERR(sunxi_cphy->serdes1v8_supply))
-		dev_err(dev, "get serdes 1v8-supply fail\n");
+		return dev_err_probe(dev, PTR_ERR(sunxi_cphy->serdes1v8_supply),
+				     "get serdes 1v8-supply fail\n");
 
 /*
 	sunxi_cphy->avdd_h_regulator = devm_regulator_get(dev, "avdd-h");
@@ -4292,7 +4293,7 @@ static int sunxi_cadence_phy_probe(struct platform_device *pdev)
 
 	ret = sunxi_cadence_phy_parse_dt(pdev);
 	if (ret)
-		return -EINVAL;
+		return ret;
 
 	ret = sunxi_cadence_phy_serdes_init(sunxi_cphy);
 	if (ret)
