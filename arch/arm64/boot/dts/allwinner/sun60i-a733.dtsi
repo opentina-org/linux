@@ -670,15 +670,11 @@
 			clocks = <&ccu CLK_USB0_EHCI>,
 				 <&ccu CLK_USB0_OHCI>,
 				 <&ccu CLK_USB>,
-				 <&ccu CLK_USB_REF>,
-				 <&ccu CLK_USB_SYS_AHB_GATE>,
-				 <&ccu CLK_MSI_LITE2>;
+				 <&ccu CLK_USB_REF>;
 			clock-names = "ehci",
 				      "ohci",
 				      "bus",
-				      "ref",
-				      "ahb",
-				      "msi";
+				      "ref";
 			resets = <&ccu RST_USB_0_EHCI>;
 			reset-names = "hci";
 			phys = <&usbphy 0>;
@@ -693,14 +689,10 @@
 			interrupts = <GIC_SPI 158 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&ccu CLK_USB0_OHCI>,
 				 <&ccu CLK_USB>,
-				 <&ccu CLK_USB_REF>,
-				 <&ccu CLK_USB_SYS_AHB_GATE>,
-				 <&ccu CLK_MSI_LITE2>;
+				 <&ccu CLK_USB_REF>;
 			clock-names = "ohci",
 				      "bus",
-				      "ref",
-				      "ahb",
-				      "msi";
+				      "ref";
 			resets = <&ccu RST_USB_0_OHCI>;
 			reset-names = "hci";
 			phys = <&usbphy 0>;
