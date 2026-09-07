@@ -479,12 +479,10 @@
 
 &ehci0 {
 	status = "okay";
-	iommus = <&mmu_aw 0 1>;
 };
 
 &ohci0 {
 	status = "okay";
-	iommus = <&mmu_aw 0 1>;
 };
 
 &gpadc0 {

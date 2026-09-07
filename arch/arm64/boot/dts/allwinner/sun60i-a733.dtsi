@@ -664,7 +664,7 @@
 		};
 
 		ehci0: usb@4101000 {
-			compatible = "allwinner,sun60i-a733-ehci";
+			compatible = "generic-ehci";
 			reg = <0x0 0x4101000 0x0 0x100>;
 			interrupts = <GIC_SPI 157 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&ccu CLK_USB0_EHCI>,
@@ -679,12 +679,11 @@
 			reset-names = "hci";
 			phys = <&usbphy 0>;
 			phy-names = "usb";
-			allwinner,usb-port = <0>;
 			status = "disabled";
 		};
 
 		ohci0: usb@4101400 {
-			compatible = "allwinner,sun60i-a733-ohci";
+			compatible = "generic-ohci";
 			reg = <0x0 0x4101400 0x0 0x100>;
 			interrupts = <GIC_SPI 158 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&ccu CLK_USB0_OHCI>,
@@ -697,7 +696,6 @@
 			reset-names = "hci";
 			phys = <&usbphy 0>;
 			phy-names = "usb";
-			allwinner,usb-port = <0>;
 			status = "disabled";
 		};
 
