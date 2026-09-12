@@ -35,6 +35,16 @@
 		enable-active-high;
 	};
 
+	reg_usb12_vbus: regulator-usb12-vbus {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&r_pio 0 6 GPIO_ACTIVE_HIGH>;
+		regulator-name = "USB12_VBUS";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		vin-supply = <&reg_5v>;
+	};
+
 	sound_i2s0: sound {
 		compatible = "simple-audio-card";
 		simple-audio-card,name = "sunxi-i2s0";
@@ -133,6 +143,10 @@
 			boot-stage = "kernel";
 		};
 	};
+};
+
+&ehci1 {
+	status = "okay";
 };
 
 &gmac {
@@ -476,17 +490,24 @@
 };
 
 &usbphy {
+	usb1_vbus-supply = <&reg_usb12_vbus>;
 	status = "okay";
 };
 
 &ehci0 {
 	status = "okay";
-	iommus = <&mmu_aw 0 1>;
+};
+
+&ehci1 {
+	status = "okay";
 };
 
 &ohci0 {
 	status = "okay";
-	iommus = <&mmu_aw 0 1>;
+};
+
+&ohci1 {
+	status = "okay";
 };
 
 &gpadc0 {

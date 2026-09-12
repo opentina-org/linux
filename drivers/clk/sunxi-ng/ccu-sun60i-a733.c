@@ -443,7 +443,7 @@ static SUNXI_CCU_M_WITH_MUX_GATE(gic_clk, "gic",
 		0, 5,	/* M */
 		24, 3,	/* mux */
 		BIT(31),	/* gate */
-		CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED);
+		CLK_SET_RATE_PARENT | CLK_IS_CRITICAL);
 
 static const char * const cpu_peri_parents[] = { "sys24M", "osc32k", "pll-peri0-600m", "pll-peri0-480m", "pll-peri0-400m" };
 
@@ -452,7 +452,7 @@ static SUNXI_CCU_M_WITH_MUX_GATE(cpu_peri_clk, "cpu-peri",
 		0, 5,	/* M */
 		24, 3,	/* mux */
 		BIT(31),	/* gate */
-		CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED);
+		CLK_SET_RATE_PARENT | CLK_IS_CRITICAL);
 
 static SUNXI_CCU_GATE(its_pcie0_a_clk, "its-pcie0-aclk",
 		"mbus",
@@ -473,12 +473,12 @@ static SUNXI_CCU_MP_DATA_WITH_MUX_GATE_FEAT(nsi_clk, "nsi",
 		0, 0,
 		24, 3,	/* mux */
 		BIT(31),	/* gate */
-		CLK_SET_RATE_NO_REPARENT | CLK_GET_RATE_NOCACHE | CLK_IGNORE_UNUSED,
+		CLK_SET_RATE_NO_REPARENT | CLK_GET_RATE_NOCACHE | CLK_IS_CRITICAL,
 		CCU_FEATURE_UPDATE_BIT);
 
 static SUNXI_CCU_GATE(nsi_cfg_clk, "nsi-cfg",
 		"apb0",
-		0x0584, BIT(0), 0);
+		0x0584, BIT(0), CLK_IS_CRITICAL);
 
 static const struct clk_parent_data mbus_parents[] = {
 	{ .index = -1, .name = "sys24M" },
@@ -495,7 +495,7 @@ static SUNXI_CCU_MP_DATA_WITH_MUX_GATE_FEAT(mbus_clk, "mbus",
 		0, 0,
 		24, 3,	/* mux */
 		BIT(31),	/* gate */
-		CLK_SET_RATE_NO_REPARENT | CLK_GET_RATE_NOCACHE | CLK_IGNORE_UNUSED,
+		CLK_SET_RATE_NO_REPARENT | CLK_GET_RATE_NOCACHE | CLK_IS_CRITICAL,
 		CCU_FEATURE_UPDATE_BIT);
 
 static SUNXI_CCU_GATE(iommu0_sys_h_clk, "iommu0-sys-hclk",
@@ -512,15 +512,15 @@ static SUNXI_CCU_GATE(iommu0_sys_mbus_clk, "iommu0-sys-mclk",
 
 static SUNXI_CCU_GATE(msi_lite0_clk, "msi-lite0",
 		"ahb",
-		0x0594, BIT(0), CLK_IGNORE_UNUSED);
+		0x0594, BIT(0), CLK_IS_CRITICAL);
 
 static SUNXI_CCU_GATE(msi_lite1_clk, "msi-lite1",
 		"ahb",
-		0x059C, BIT(0), CLK_IGNORE_UNUSED);
+		0x059C, BIT(0), CLK_IS_CRITICAL);
 
 static SUNXI_CCU_GATE(msi_lite2_clk, "msi-lite2",
 		"ahb",
-		0x05A4, BIT(0), 0);
+		0x05A4, BIT(0), CLK_IS_CRITICAL);
 
 static SUNXI_CCU_GATE(iommu1_sys_h_clk, "iommu1-sys-hclk",
 		"ahb",
@@ -532,13 +532,13 @@ static SUNXI_CCU_GATE(iommu1_sys_p_clk, "iommu1-sys-pclk",
 
 static SUNXI_CCU_GATE(iommu1_sys_mbus_clk, "iommu1-sys-mclk",
 		"mbus",
-		0x05B4, BIT(0), 0);
+		0x05B4, BIT(0), CLK_IGNORE_UNUSED);
 
 #define AHB_MASTER_KEY_VALUE	0x10000FF
 static SUNXI_CCU_GATE_WITH_KEY(cpus_hclk_gate_clk, "cpus-hclk-gate",
 		"ahb", 0x05C0,
 		AHB_MASTER_KEY_VALUE,
-		BIT(28), CLK_IGNORE_UNUSED);
+		BIT(28), CLK_IS_CRITICAL);
 
 static SUNXI_CCU_GATE_WITH_KEY(store_ahb_gate_clk, "store-ahb-gate",
 		"ahb", 0x05C0,
@@ -548,17 +548,17 @@ static SUNXI_CCU_GATE_WITH_KEY(store_ahb_gate_clk, "store-ahb-gate",
 static SUNXI_CCU_GATE_WITH_KEY(msilite0_ahb_gate_clk, "msilite0-ahb-gate",
 		"ahb", 0x05C0,
 		AHB_MASTER_KEY_VALUE,
-		BIT(16), CLK_IGNORE_UNUSED);
+		BIT(16), CLK_IS_CRITICAL);
 
 static SUNXI_CCU_GATE_WITH_KEY(usb_sys_ahb_gate_clk, "usb-sys-ahb-gate",
 		"ahb", 0x05C0,
 		AHB_MASTER_KEY_VALUE,
-		BIT(9), CLK_IGNORE_UNUSED);
+		BIT(9), CLK_IS_CRITICAL);
 
 static SUNXI_CCU_GATE_WITH_KEY(serdes_ahb_gate_clk, "serdes-ahb-gate",
 		"ahb", 0x05C0,
 		AHB_MASTER_KEY_VALUE,
-		BIT(8), CLK_IGNORE_UNUSED);
+		BIT(8), CLK_IS_CRITICAL);
 
 static SUNXI_CCU_GATE_WITH_KEY(gpu0_ahb_gate_clk, "gpu0-ahb-gate",
 		"ahb", 0x05C0,
@@ -604,7 +604,7 @@ static SUNXI_CCU_GATE_WITH_KEY(ve_ahb_gate_clk, "ve-ahb-gate",
 static SUNXI_CCU_GATE_WITH_KEY(msilite2_mbus_gate_clk, "msilite2-mbus-gate",
 		"mbus", 0x05E0,
 		MBUS_MASTER_KEY_VALUE,
-		BIT(31), CLK_IGNORE_UNUSED);
+		BIT(31), CLK_IS_CRITICAL);
 
 static SUNXI_CCU_GATE_WITH_KEY(store_mbus_gate_clk, "store-mbus-gate",
 		"mbus", 0x05E0,
@@ -614,12 +614,12 @@ static SUNXI_CCU_GATE_WITH_KEY(store_mbus_gate_clk, "store-mbus-gate",
 static SUNXI_CCU_GATE_WITH_KEY(msilite0_mbus_gate_clk, "msilite0-mbus-gate",
 		"mbus", 0x05E0,
 		MBUS_MASTER_KEY_VALUE,
-		BIT(29), CLK_IGNORE_UNUSED);
+		BIT(29), CLK_IS_CRITICAL);
 
 static SUNXI_CCU_GATE_WITH_KEY(serdes_mbus_gate_clk, "serdes-mbus-gate",
 		"mbus", 0x05E0,
 		MBUS_MASTER_KEY_VALUE,
-		BIT(28), CLK_IGNORE_UNUSED);
+		BIT(28), CLK_IS_CRITICAL);
 
 static SUNXI_CCU_GATE_WITH_KEY(vid_in_mbus_gate_clk, "vid-in-mbus-gate",
 		"mbus", 0x05E0,
@@ -1034,7 +1034,7 @@ static SUNXI_CCU_MP_DATA_WITH_MUX_GATE_FEAT(dram0_clk, "dram0",
 		0, 0,
 		24, 3,	/* mux */
 		BIT(31),	/* gate */
-		CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED | CLK_GET_RATE_NOCACHE,
+		CLK_SET_RATE_PARENT | CLK_IS_CRITICAL | CLK_GET_RATE_NOCACHE,
 		CCU_FEATURE_UPDATE_BIT);
 
 static SUNXI_CCU_GATE(dram0_bus_clk, "dram0-gate",
@@ -1924,163 +1924,163 @@ static SUNXI_CCU_MUX(bus_debug_clk, "bus_debug",
 
 static SUNXI_CCU_GATE(pll_ddr_auto_clk, "pll-ddr-auto",
 		 "pll-ddr", 0x1904,
-		BIT(0), 0);
+		BIT(0), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri0_2x_auto_clk, "pll-peri0-2x-auto",
 		 "pll-peri0-2x", 0x1908,
-		BIT(11), 0);
+		BIT(11), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri0_800m_auto_clk, "pll-peri0-800m-auto",
 		 "pll-peri0-800m", 0x1908,
-		BIT(10), 0);
+		BIT(10), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri0_600m_auto_clk, "pll-peri0-600m-auto",
 		 "pll-peri0-600m", 0x1908,
-		BIT(9), 0);
+		BIT(9), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri0_480m_all_auto_clk, "pll-peri0-480m-all-auto",
 		 "pll-peri0-480m", 0x1908,
-		BIT(8), 0);
+		BIT(8), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri0_480m_auto_clk, "pll-peri0-480m-auto",
 		 "pll-peri0-480m", 0x1908,
-		BIT(7), 0);
+		BIT(7), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri0_160m_auto_clk, "pll-peri0-160m-auto",
 		 "pll-peri0-160m", 0x1908,
-		BIT(6), 0);
+		BIT(6), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri0_300m_all_auto_clk, "pll-peri0-300m-all-auto",
 		 "pll-peri0-300m", 0x1908,
-		BIT(5), 0);
+		BIT(5), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri0_300m_auto_clk, "pll-peri0-300m-auto",
 		 "pll-peri0-300m", 0x1908,
-		BIT(4), 0);
+		BIT(4), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri0_150m_auto_clk, "pll-peri0-150m-auto",
 		 "pll-peri0-150m", 0x1908,
-		BIT(3), 0);
+		BIT(3), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri0_400m_all_auto_clk, "pll-peri0-400m-all-auto",
 		 "pll-peri0-400m", 0x1908,
-		BIT(2), 0);
+		BIT(2), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri0_400m_auto_clk, "pll-peri0-400m-auto",
 		 "pll-peri0-400m", 0x1908,
-		BIT(1), 0);
+		BIT(1), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri0_200m_auto_clk, "pll-peri0-200m-auto",
 		 "pll-peri0-200m", 0x1908,
-		BIT(0), 0);
+		BIT(0), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri1_800m_auto_clk, "pll-peri1-800m-auto",
 		 "pll-peri1-800m", 0x190c,
-		BIT(11), 0);
+		BIT(11), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri1_600m_all_auto_clk, "pll-peri1-600m-all-auto",
 		 "pll-peri1-600m", 0x190c,
-		BIT(10), 0);
+		BIT(10), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri1_600m_auto_clk, "pll-peri1-600m-auto",
 		 "pll-peri1-600m", 0x190c,
-		BIT(9), 0);
+		BIT(9), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri1_480m_all_auto_clk, "pll-peri1-480m-all-auto",
 		 "pll-peri1-480m", 0x190c,
-		BIT(8), 0);
+		BIT(8), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri1_480m_auto_clk, "pll-peri1-480m-auto",
 		 "pll-peri1-480m", 0x190c,
-		BIT(7), 0);
+		BIT(7), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri1_160m_auto_clk, "pll-peri1-160m-auto",
 		 "pll-peri1-160m", 0x190c,
-		BIT(6), 0);
+		BIT(6), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri1_300m_all_auto_clk, "pll-peri1-300m-all-auto",
 		 "pll-peri1-300m", 0x190c,
-		BIT(5), 0);
+		BIT(5), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri1_300m_auto_clk, "pll-peri1-300m-auto",
 		 "pll-peri1-300m", 0x190c,
-		BIT(4), 0);
+		BIT(4), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri1_150m_auto_clk, "pll-peri1-150m-auto",
 		 "pll-peri1-150m", 0x190c,
-		BIT(3), 0);
+		BIT(3), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri1_400m_all_auto_clk, "pll-peri1-400m-all-auto",
 		 "pll-peri1-400m", 0x190c,
-		BIT(2), 0);
+		BIT(2), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri1_400m_auto_clk, "pll-peri1-400m-auto",
 		 "pll-peri1-400m", 0x190c,
-		BIT(1), 0);
+		BIT(1), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_peri1_200m_auto_clk, "pll-peri1-200m-auto",
 		 "pll-peri1-200m", 0x190c,
-		BIT(0), 0);
+		BIT(0), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_video2_3x_auto_clk, "pll-video2-3x-auto",
 		 "pll-video2-3x", 0x1910,
-		BIT(6), 0);
+		BIT(6), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_video1_3x_auto_clk, "pll-video1-3x-auto",
 		 "pll-video1-3x", 0x1910,
-		BIT(5), 0);
+		BIT(5), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_video0_3x_auto_clk, "pll-video0-3x-auto",
 		 "pll-video0-3x", 0x1910,
-		BIT(4), 0);
+		BIT(4), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_video2_4x_auto_clk, "pll-video2-4x-auto",
 		 "pll-video2-4x", 0x1910,
-		BIT(2), 0);
+		BIT(2), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_video1_4x_auto_clk, "pll-video1-4x-auto",
 		 "pll-video1-4x", 0x1910,
-		BIT(1), 0);
+		BIT(1), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_video0_4x_auto_clk, "pll-video0-4x-auto",
 		 "pll-video0-4x", 0x1910,
-		BIT(0), 0);
+		BIT(0), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_gpu0_auto_clk, "pll-gpu0-auto",
 		 "pll-gpu", 0x1914,
-		BIT(0), 0);
+		BIT(0), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_ve1_auto_clk, "pll-ve1-auto",
 		 "pll-ve1", 0x1918,
-		BIT(1), 0);
+		BIT(1), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_ve0_auto_clk, "pll-ve0-auto",
 		 "pll-ve0", 0x1918,
-		BIT(0), 0);
+		BIT(0), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_audio1_div5_auto_clk, "pll-audio1-div5-auto",
 		 "pll-audio1-div5", 0x191c,
-		BIT(2), 0);
+		BIT(2), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_audio1_div2_auto_clk, "pll-audio1-div2-auto",
 		 "pll-audio1-div2", 0x191c,
-		BIT(1), 0);
+		BIT(1), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_audio0_4x_auto_clk, "pll-audio1-4x-auto",
 		 "pll-audio1-4x", 0x191c,
-		BIT(0), 0);
+		BIT(0), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_npu_auto_clk, "pll-npu-auto",
 		 "pll-npu", 0x1920,
-		BIT(0), 0);
+		BIT(0), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_de_3x_auto_clk, "pll-de-3x-auto",
 		 "pll-de-3x", 0x1928,
-		BIT(1), 0);
+		BIT(1), CLK_IGNORE_UNUSED);
 
 static SUNXI_CCU_GATE(pll_de_4x_auto_clk, "pll-de-4x-auto",
 		 "pll-de-4x", 0x1928,
-		BIT(0), 0);
+		BIT(0), CLK_IGNORE_UNUSED);
 
 #if IS_ENABLED(CONFIG_PM_SLEEP)
 static struct ccu_nm pll_audio0_sdm_pat0_clk = {
