@@ -164,6 +164,8 @@
 &mmc0 {
 	bus-width = <4>;
 	disable-wp;
+	/* Poll: first CD IRQ is easy to miss next to UFS; card is the rootfs. */
+	broken-cd;
 	cd-gpios = <&pio 5 6 GPIO_ACTIVE_LOW>;
 	/* DC1SW2 gates 3.3V card power; I/O is also 3.3V (not CLDO5 1.8V). */
 	vmmc-supply = <&swout2>;
