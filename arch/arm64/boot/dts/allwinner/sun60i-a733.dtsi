@@ -11,6 +11,7 @@
 #include <dt-bindings/clock/sun60i-a733-rtc.h>
 #include <dt-bindings/clock/sun60i-a733-r-ccu.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/power/allwinner,sun60i-a733-pck-600.h>
 #include <dt-bindings/reset/sun60i-a733-ccu.h>
 #include <dt-bindings/thermal/thermal.h>
 #include <dt-bindings/reset/sun60i-a733-r-ccu.h>
@@ -1251,12 +1252,55 @@
 		};
 	};
 
-	/* PCK-600 power domains */
+	/*
+	 * PCK-600 power domains (VI required for CSI/ISP).
+	 *
+	 * The pck600 driver registers domains from a static table; child nodes
+	 * with `reg` are still required so sunxi-iommu can build
+	 * pd_configurated_mask and attach /sys/class/iommu_master/* devices
+	 * (REF aw2511 has the same child layout under power-controller).
+	 */
 	pck600: power-controller@7060000 {
 		compatible = "allwinner,sun60i-a733-pck-600";
 		reg = <0x0 0x07060000 0x0 0xb000>;
 		clocks = <&r_ccu CLK_R_PPU>;
 		#power-domain-cells = <1>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pd_vi@0 {
+			reg = <PD_VI>;
+		};
+		pd_de_sys@1 {
+			reg = <PD_DE_SYS>;
+		};
+		pd_ve_dec@2 {
+			reg = <PD_VE_DEC>;
+		};
+		pd_ve_enc@3 {
+			reg = <PD_VE_ENC>;
+		};
+		pd_npu@4 {
+			reg = <PD_NPU>;
+		};
+		pd_gpu_top@5 {
+			reg = <PD_GPU_TOP>;
+		};
+		pd_gpu_core@6 {
+			reg = <PD_GPU_CORE>;
+		};
+		pd_pcie@7 {
+			reg = <PD_PCIE>;
+		};
+		pd_usb2@8 {
+			reg = <PD_USB2>;
+		};
+		pd_vo@9 {
+			reg = <PD_VO>;
+		};
+		pd_vo1@10 {
+			reg = <PD_VO1>;
+		};
 	};
 };
 #include "sun60i-a733-gpu.dtsi"
