@@ -774,6 +774,20 @@
 			};
 		};
 
+		crypto: crypto@4603000 {
+			compatible = "allwinner,sun60i-a733-crypto";
+			reg = <0x0 0x04603000 0x0 0x100>;
+			interrupts = <GIC_SPI 168 IRQ_TYPE_EDGE_RISING>;
+			clocks = <&ccu CLK_BUS_CE>, <&ccu CLK_CE>,
+				 <&ccu CLK_MBUS_CE>, <&ccu CLK_CE_SYS>;
+			clock-names = "bus", "mod", "ram", "sys";
+			assigned-clocks = <&ccu CLK_CE>;
+			assigned-clock-parents = <&ccu CLK_PLL_PERI0_400M>;
+			assigned-clock-rates = <400000000>;
+			resets = <&ccu RST_BUS_CE>;
+			status = "disabled";
+		};
+
 		r_ccu: r_ccu@7010000 {
 			compatible = "allwinner,sun60iw2-r-ccu";
 			reg = <0x0 0x07010000 0x0 0x340>;
