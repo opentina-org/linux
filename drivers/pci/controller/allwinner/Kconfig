@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: GPL-2.0-only
+# Copyright (C) 2015-2025 Allwinner Technology Co., Ltd.
+
+menu "Allwinner PCIe Drivers"
+	depends on PCI
+
+choice
+	prompt "Allwinner PCIe controller support"
+	default PCIE_SUNXI_NONE
+
+config PCIE_SUNXI_RC
+	bool "RC controller - Host mode"
+	help
+	  Enables support for the PCIe RC controller in the Allwinner SoC.
+
+config PCIE_SUNXI_EP
+	bool "EP controller - Endpoint mode"
+	select PCI_ENDPOINT
+	help
+	  Enables support for the PCIe EP controller in the Allwinner SoC.
+
+config PCIE_SUNXI_NONE
+	bool "None"
+	help
+	  Disable support for the PCIe controller in the Allwinner SoC.
+
+endchoice
+
+endmenu

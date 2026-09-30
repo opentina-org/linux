@@ -57,3 +57,12 @@ config PHY_SUN50I_USB3
 	  part of Allwinner H6 SoC.
 
 	  This driver controls each individual USB 2+3 host PHY combo.
+
+config PHY_SUN60I_COMBOPHY
+	tristate "Allwinner Cadence Combo PHY driver for A733"
+	depends on OF
+	select GENERIC_PHY
+	select EXTCON
+	help
+	  Enable this to support the Cadence Combo PHY found on Allwinner
+	  A733 SoCs.

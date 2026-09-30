@@ -187,6 +187,13 @@
 	status = "okay";
 };
 
+&pcie_rc {
+	reset-gpios = <&pio 8 10 GPIO_ACTIVE_HIGH>;
+	wake-gpios = <&pio 8 13 GPIO_ACTIVE_HIGH>;
+	pcie3v3-supply = <&swout2>;
+	status = "okay";
+};
+
 &pio {
 	/* PF = SD, PB = UART0, PG = Wi-Fi (DCDC1 3.3V) */
 	vcc-pf-supply = <&swout2>;
@@ -405,6 +412,13 @@
 
 &cpu7 {
 	cpu-supply = <&reg_dcdc3>;
+};
+
+&serdes {
+	serdes1v8-supply = <&cldo5>;
+	avdd-c-supply = <&reg_dcdc2>;
+	avdd-d-supply = <&reg_dcdc2>;
+	status = "okay";
 };
 
 &uart0 {
