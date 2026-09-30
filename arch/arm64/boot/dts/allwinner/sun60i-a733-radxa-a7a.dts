@@ -53,6 +53,21 @@
 		allwinner,pinmux = <2>;
 		drive-strength = <10>;
 	};
+
+	spi0_pins: spi0-pins {
+		pins = "PC2", "PC3", "PC4", "PC12";
+		function = "spi0";
+		drive-strength = <20>;
+		allwinner,pinmux = <5>;
+	};
+
+	spi0_pins_cs: spi0-pins-cs {
+		pins = "PC12";
+		function = "spi0";
+		drive-strength = <20>;
+		allwinner,pinmux = <5>;
+		bias-pull-up;
+	};
 };
 
 &r_pio {
@@ -116,7 +131,7 @@
 			cldo5: cldo5 {
 				regulator-name = "cldo5";
 				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <3300000>;
+				regulator-max-microvolt = <1800000>;
 				regulator-boot-on;
 				regulator-always-on;
 			};
@@ -129,6 +144,23 @@
 				regulator-always-on;
 			};
 		};
+	};
+};
+
+&spi0 {
+	status = "okay";
+	pinctrl-0 = <&spi0_pins &spi0_pins_cs>;
+	pinctrl-names = "default";
+
+	flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		vcc-supply = <&cldo5>;
+		spi-max-frequency = <8000000>;
+		spi-rx-bus-width = <1>;
+		spi-tx-bus-width = <1>;
+		m25p,fast-read;
+		status = "okay";
 	};
 };
 
@@ -180,7 +212,6 @@
 	disable-wp;
 	cd-gpios = <&pio 5 6 GPIO_ACTIVE_LOW>;
 	vmmc-supply = <&swout2>;
-	vqmmc-supply = <&cldo5>;
 	status = "okay";
 };
 
