@@ -22,6 +22,7 @@
 #define CCU_FEATURE_DUAL_DIV		BIT(10)
 #define CCU_FEATURE_UPDATE_BIT		BIT(11)
 #define CCU_FEATURE_CLEAR_MOD		BIT(12)
+#define CCU_FEATURE_KEEP_PLL_ENABLED	BIT(13)
 
 /* MMC timing mode switch bit */
 #define CCU_MMC_NEW_TIMING_MODE		BIT(30)

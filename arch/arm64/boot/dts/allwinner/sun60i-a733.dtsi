@@ -11,6 +11,7 @@
 #include <dt-bindings/clock/sun60i-a733-rtc.h>
 #include <dt-bindings/clock/sun60i-a733-r-ccu.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/power/allwinner,sun60i-a733-pck-600.h>
 #include <dt-bindings/reset/sun60i-a733-ccu.h>
 #include <dt-bindings/thermal/thermal.h>
 #include <dt-bindings/reset/sun60i-a733-r-ccu.h>
@@ -304,6 +305,13 @@
 		optee_shm: shm@42000000 {
 			reg = <0x0 0x42000000 0x0 0x00400000>;
 			no-map;
+		};
+
+		drm_cma: drm-cma@0 {
+			compatible = "shared-dma-pool";
+			reusable;
+			size = <0x0 0x8000000>;
+			alignment = <0x0 0x400000>;
 		};
 	};
 
@@ -1257,6 +1265,13 @@
 		reg = <0x0 0x07060000 0x0 0xb000>;
 		clocks = <&r_ccu CLK_R_PPU>;
 		#power-domain-cells = <1>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		/* Required by the IOMMU driver's DE0 power-domain discovery. */
+		pd_de_sys@1 {
+			reg = <PD_DE_SYS>;
+		};
 	};
 };
 #include "sun60i-a733-gpu.dtsi"

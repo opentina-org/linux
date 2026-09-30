@@ -229,6 +229,8 @@ static int ccu_nm_set_rate(struct clk_hw *hw, unsigned long rate,
 
 	reg |= (_nm.n - nm->n.offset) << nm->n.shift;
 	reg |= (_nm.m - nm->m.offset) << nm->m.shift;
+	if (nm->common.features & CCU_FEATURE_KEEP_PLL_ENABLED)
+		reg |= nm->enable | nm->output | nm->lock_enable | nm->ldo_en;
 	writel(reg, nm->common.base + nm->common.reg);
 
 	spin_unlock_irqrestore(nm->common.lock, flags);

@@ -13,10 +13,15 @@ sun4i-drm-hdmi-y		+= sun4i_hdmi_tmds_clk.o
 sun8i-drm-hdmi-y		+= sun8i_dw_hdmi.o
 sun8i-drm-hdmi-y		+= sun8i_hdmi_phy.o
 sun8i-drm-hdmi-y		+= sun8i_hdmi_phy_clk.o
+sun8i-drm-hdmi-y		+= sun60i_hdmi_phy.o
+sun8i-drm-hdmi-y		+= sun60i_hdmi_top_phy.o
+sun8i-drm-hdmi-y		+= sun60i_hdmi_snps_phy.o
 
 sun8i-mixer-y			+= sun8i_mixer.o sun8i_ui_layer.o \
 				   sun8i_vi_layer.o sun8i_ui_scaler.o \
 				   sun8i_vi_scaler.o sun8i_csc.o
+
+sun60i-de-y			+= sun60i_de.o sun60i_de_hw.o
 
 sun4i-tcon-y			+= sun4i_crtc.o
 sun4i-tcon-y			+= sun4i_tcon_dclk.o
@@ -37,4 +42,5 @@ obj-$(CONFIG_DRM_SUN4I_HDMI)	+= sun4i-drm-hdmi.o
 obj-$(CONFIG_DRM_SUN6I_DSI)	+= sun6i_mipi_dsi.o
 obj-$(CONFIG_DRM_SUN8I_DW_HDMI)	+= sun8i-drm-hdmi.o
 obj-$(CONFIG_DRM_SUN8I_MIXER)	+= sun8i-mixer.o
+obj-$(CONFIG_DRM_SUN60I_DE)		+= sun60i-de.o
 obj-$(CONFIG_DRM_SUN8I_TCON_TOP) += sun8i_tcon_top.o

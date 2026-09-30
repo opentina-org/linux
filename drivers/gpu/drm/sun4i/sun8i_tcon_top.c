@@ -16,8 +16,10 @@
 #include "sun8i_tcon_top.h"
 
 struct sun8i_tcon_top_quirks {
+	bool has_tcon_tv0;
 	bool has_tcon_tv1;
 	bool has_dsi;
+	bool has_legacy_mux;
 };
 
 static bool sun8i_tcon_top_node_is_tcon_top(struct device_node *node)
@@ -35,6 +37,11 @@ int sun8i_tcon_top_set_hdmi_src(struct device *dev, int tcon)
 		dev_err(dev, "Device is not TCON TOP!\n");
 		return -EINVAL;
 	}
+
+	/* A733 uses bit 28 as the TV0 HDMI gate, not as a source mux. */
+	if (of_device_is_compatible(dev->of_node,
+				    "allwinner,sun60i-a733-tcon-top"))
+		return sun8i_tcon_top_hdmi_gate_enable(dev, true);
 
 	if (tcon < 2 || tcon > 3) {
 		dev_err(dev, "TCON index must be 2 or 3!\n");
@@ -54,9 +61,48 @@ int sun8i_tcon_top_set_hdmi_src(struct device *dev, int tcon)
 }
 EXPORT_SYMBOL(sun8i_tcon_top_set_hdmi_src);
 
+int sun8i_tcon_top_hdmi_gate_enable(struct device *dev, bool enable)
+{
+	struct sun8i_tcon_top *tcon_top = dev_get_drvdata(dev);
+	unsigned long flags;
+	u32 val, setup;
+
+	if (!tcon_top || !sun8i_tcon_top_node_is_tcon_top(dev->of_node))
+		return -EINVAL;
+
+	spin_lock_irqsave(&tcon_top->reg_lock, flags);
+
+	/* Match BSP tcon_top_hdmi_set_gate() for sun60iw2. */
+	val = readl(tcon_top->regs + TCON_TOP_GATE_SRC_REG);
+	if (enable) {
+		val |= BIT(TCON_TOP_TCON_TV0_GATE);
+		val |= BIT(TCON_TOP_TV0_HDMI_GATE);
+	} else {
+		val &= ~BIT(TCON_TOP_TV0_HDMI_GATE);
+	}
+	writel(val, tcon_top->regs + TCON_TOP_GATE_SRC_REG);
+
+	/*
+	 * HDMI path (15.2.9.1): TV0 from HDMI (bit1=0), pixel clk from
+	 * HDMI PHY (bit3=0), CCMU as TV0_CLK_SRC (bit0=0). Matches REF SETUP=0.
+	 */
+	setup = readl(tcon_top->regs + TCON_TOP_TCON_TV_SETUP_REG);
+	if (enable)
+		setup &= ~(TCON_TOP_TV0_CLK_SRC_CVBS |
+			   TCON_TOP_TV0_EDP_HDMI_CK_SEL |
+			   TCON_TOP_TV0_HDMIPHY_CCU_CK_SEL);
+	writel(setup, tcon_top->regs + TCON_TOP_TCON_TV_SETUP_REG);
+
+	spin_unlock_irqrestore(&tcon_top->reg_lock, flags);
+
+	return 0;
+}
+EXPORT_SYMBOL(sun8i_tcon_top_hdmi_gate_enable);
+
 int sun8i_tcon_top_de_config(struct device *dev, int mixer, int tcon)
 {
 	struct sun8i_tcon_top *tcon_top = dev_get_drvdata(dev);
+	const struct sun8i_tcon_top_quirks *quirks;
 	unsigned long flags;
 	u32 reg;
 
@@ -64,6 +110,10 @@ int sun8i_tcon_top_de_config(struct device *dev, int mixer, int tcon)
 		dev_err(dev, "Device is not TCON TOP!\n");
 		return -EINVAL;
 	}
+
+	quirks = of_device_get_match_data(dev);
+	if (!quirks || !quirks->has_legacy_mux)
+		return 0;
 
 	if (mixer > 1) {
 		dev_err(dev, "Mixer index is too high!\n");
@@ -146,11 +196,25 @@ static int sun8i_tcon_top_bind(struct device *dev, struct device *master,
 
 	spin_lock_init(&tcon_top->reg_lock);
 
-	tcon_top->rst = devm_reset_control_get(dev, NULL);
-	if (IS_ERR(tcon_top->rst)) {
-		dev_err(dev, "Couldn't get our reset line\n");
-		return PTR_ERR(tcon_top->rst);
+	/*
+	 * H6/R40 use a single unnamed reset. A733 VO1 also needs
+	 * RST_BUS_VIDEO_OUT1 ("rst_bus_reg") for the HDMI APB fabric.
+	 */
+	tcon_top->rst = devm_reset_control_get_optional(dev, "bus");
+	if (IS_ERR(tcon_top->rst))
+		return dev_err_probe(dev, PTR_ERR(tcon_top->rst),
+				     "Couldn't get bus reset\n");
+	if (!tcon_top->rst) {
+		tcon_top->rst = devm_reset_control_get(dev, NULL);
+		if (IS_ERR(tcon_top->rst)) {
+			dev_err(dev, "Couldn't get our reset line\n");
+			return PTR_ERR(tcon_top->rst);
+		}
 	}
+
+	tcon_top->rst_reg = devm_reset_control_get_optional(dev, "rst_bus_reg");
+	if (IS_ERR(tcon_top->rst_reg))
+		return PTR_ERR(tcon_top->rst_reg);
 
 	tcon_top->bus = devm_clk_get(dev, "bus");
 	if (IS_ERR(tcon_top->bus)) {
@@ -158,29 +222,50 @@ static int sun8i_tcon_top_bind(struct device *dev, struct device *master,
 		return PTR_ERR(tcon_top->bus);
 	}
 
+	tcon_top->ahb_gate = devm_clk_get_optional(dev, "ahb-gate");
+	if (IS_ERR(tcon_top->ahb_gate))
+		return PTR_ERR(tcon_top->ahb_gate);
+
 	regs = devm_platform_ioremap_resource(pdev, 0);
 	tcon_top->regs = regs;
 	if (IS_ERR(regs))
 		return PTR_ERR(regs);
 
+	if (tcon_top->rst_reg) {
+		ret = reset_control_deassert(tcon_top->rst_reg);
+		if (ret) {
+			dev_err(dev, "Could not deassert rst_bus_reg\n");
+			return ret;
+		}
+	}
+
 	ret = reset_control_deassert(tcon_top->rst);
 	if (ret) {
 		dev_err(dev, "Could not deassert ctrl reset control\n");
-		return ret;
+		goto err_assert_rst_reg;
+	}
+
+	ret = clk_prepare_enable(tcon_top->ahb_gate);
+	if (ret) {
+		dev_err(dev, "Could not enable ahb-gate clock\n");
+		goto err_assert_reset;
 	}
 
 	ret = clk_prepare_enable(tcon_top->bus);
 	if (ret) {
 		dev_err(dev, "Could not enable bus clock\n");
-		goto err_assert_reset;
+		goto err_disable_ahb_gate;
 	}
 
 	/*
 	 * At least on H6, some registers have some bits set by default
-	 * which may cause issues. Clear them here.
+	 * which may cause issues. Clear them here. A733 VO0/VO1 uses a
+	 * different register layout, so preserve the firmware state there.
 	 */
-	writel(0, regs + TCON_TOP_PORT_SEL_REG);
-	writel(0, regs + TCON_TOP_GATE_SRC_REG);
+	if (quirks->has_legacy_mux) {
+		writel(0, regs + TCON_TOP_PORT_SEL_REG);
+		writel(0, regs + TCON_TOP_GATE_SRC_REG);
+	}
 
 	/*
 	 * TCON TOP has two muxes, which select parent clock for each TCON TV
@@ -191,10 +276,11 @@ static int sun8i_tcon_top_bind(struct device *dev, struct device *master,
 	 * to TVE clock parent.
 	 */
 	i = 0;
-	clk_data->hws[CLK_TCON_TOP_TV0] =
-		sun8i_tcon_top_register_gate(dev, "tcon-tv0", regs,
-					     &tcon_top->reg_lock,
-					     TCON_TOP_TCON_TV0_GATE, i++);
+	if (quirks->has_tcon_tv0)
+		clk_data->hws[CLK_TCON_TOP_TV0] =
+			sun8i_tcon_top_register_gate(dev, "tcon-tv0", regs,
+						     &tcon_top->reg_lock,
+						     TCON_TOP_TCON_TV0_GATE, i++);
 
 	if (quirks->has_tcon_tv1)
 		clk_data->hws[CLK_TCON_TOP_TV1] =
@@ -214,10 +300,12 @@ static int sun8i_tcon_top_bind(struct device *dev, struct device *master,
 			goto err_unregister_gates;
 		}
 
-	ret = of_clk_add_hw_provider(dev->of_node, of_clk_hw_onecell_get,
-				     clk_data);
-	if (ret)
-		goto err_unregister_gates;
+	if (of_property_present(dev->of_node, "#clock-cells")) {
+		ret = of_clk_add_hw_provider(dev->of_node, of_clk_hw_onecell_get,
+					     clk_data);
+		if (ret)
+			goto err_unregister_gates;
+	}
 
 	dev_set_drvdata(dev, tcon_top);
 
@@ -228,8 +316,13 @@ err_unregister_gates:
 		if (!IS_ERR_OR_NULL(clk_data->hws[i]))
 			clk_hw_unregister_gate(clk_data->hws[i]);
 	clk_disable_unprepare(tcon_top->bus);
+err_disable_ahb_gate:
+	clk_disable_unprepare(tcon_top->ahb_gate);
 err_assert_reset:
 	reset_control_assert(tcon_top->rst);
+err_assert_rst_reg:
+	if (tcon_top->rst_reg)
+		reset_control_assert(tcon_top->rst_reg);
 
 	return ret;
 }
@@ -241,13 +334,17 @@ static void sun8i_tcon_top_unbind(struct device *dev, struct device *master,
 	struct clk_hw_onecell_data *clk_data = tcon_top->clk_data;
 	int i;
 
-	of_clk_del_provider(dev->of_node);
+	if (of_property_present(dev->of_node, "#clock-cells"))
+		of_clk_del_provider(dev->of_node);
 	for (i = 0; i < CLK_NUM; i++)
 		if (clk_data->hws[i])
 			clk_hw_unregister_gate(clk_data->hws[i]);
 
 	clk_disable_unprepare(tcon_top->bus);
+	clk_disable_unprepare(tcon_top->ahb_gate);
 	reset_control_assert(tcon_top->rst);
+	if (tcon_top->rst_reg)
+		reset_control_assert(tcon_top->rst_reg);
 }
 
 static const struct component_ops sun8i_tcon_top_ops = {
@@ -266,16 +363,25 @@ static void sun8i_tcon_top_remove(struct platform_device *pdev)
 }
 
 static const struct sun8i_tcon_top_quirks sun8i_r40_tcon_top_quirks = {
+	.has_tcon_tv0	= true,
 	.has_tcon_tv1	= true,
 	.has_dsi	= true,
+	.has_legacy_mux = true,
 };
 
 static const struct sun8i_tcon_top_quirks sun20i_d1_tcon_top_quirks = {
+	.has_tcon_tv0	= true,
 	.has_dsi	= true,
+	.has_legacy_mux = true,
 };
 
 static const struct sun8i_tcon_top_quirks sun50i_h6_tcon_top_quirks = {
-	/* Nothing special */
+	.has_tcon_tv0	= true,
+	.has_legacy_mux = true,
+};
+
+static const struct sun8i_tcon_top_quirks sun60i_a733_tv_top_quirks = {
+	.has_tcon_tv0	= true,
 };
 
 /* sun4i_drv uses this list to check if a device node is a TCON TOP */
@@ -291,6 +397,10 @@ const struct of_device_id sun8i_tcon_top_of_table[] = {
 	{
 		.compatible = "allwinner,sun50i-h6-tcon-top",
 		.data = &sun50i_h6_tcon_top_quirks
+	},
+	{
+		.compatible = "allwinner,sun60i-a733-tcon-top",
+		.data = &sun60i_a733_tv_top_quirks
 	},
 	{ /* sentinel */ }
 };

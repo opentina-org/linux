@@ -43,6 +43,7 @@ properties:
       - allwinner,sun8i-r40-tcon-top
       - allwinner,sun20i-d1-tcon-top
       - allwinner,sun50i-h6-tcon-top
+      - allwinner,sun60i-a733-tcon-top
 
   reg:
     maxItems: 1
@@ -60,6 +61,14 @@ properties:
     maxItems: 3
 
   resets:
+    minItems: 1
+    maxItems: 2
+
+  reset-names:
+    minItems: 1
+    maxItems: 2
+
+  power-domains:
     maxItems: 1
 
   ports:
@@ -99,16 +108,12 @@ properties:
     required:
       - port@0
       - port@1
-      - port@4
-      - port@5
 
 required:
-  - "#clock-cells"
   - compatible
   - reg
   - clocks
   - clock-names
-  - clock-output-names
   - resets
   - ports
 
@@ -151,6 +156,27 @@ allOf:
           required:
             - port@2
             - port@3
+
+  - if:
+      properties:
+        compatible:
+          contains:
+            enum:
+              - allwinner,sun8i-r40-tcon-top
+              - allwinner,sun20i-d1-tcon-top
+              - allwinner,sun50i-h6-tcon-top
+              - allwinner,sun60i-a733-tcon-top
+
+    then:
+      required:
+        - "#clock-cells"
+        - clock-output-names
+
+      properties:
+        ports:
+          required:
+            - port@4
+            - port@5
 
   - if:
       properties:

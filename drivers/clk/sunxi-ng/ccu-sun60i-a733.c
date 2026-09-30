@@ -98,6 +98,10 @@ static SUNXI_CCU_M(pll_peri0_2x_clk, "pll-peri0-2x",
 		20, 3,
 		0);
 
+static const struct clk_hw *pll_peri0_2x_hws[] = {
+	&pll_peri0_2x_clk.common.hw,
+};
+
 static SUNXI_CCU_M(pll_peri0_800m_clk, "pll-peri0-800m",
 		"pll-peri0", 0x00A0,
 		16, 3,
@@ -155,7 +159,9 @@ static CLK_FIXED_FACTOR(pll_peri1_300m_clk, "pll-peri1-300m", "pll-peri1-600m", 
 static CLK_FIXED_FACTOR(pll_peri1_200m_clk, "pll-peri1-200m", "pll-peri1-400m", 2, 1, 0);
 static CLK_FIXED_FACTOR(pll_peri1_160m_clk, "pll-peri1-160m", "pll-peri1-480m", 3, 1, 0);
 static CLK_FIXED_FACTOR(pll_peri1_150m_clk, "pll-peri1-150m", "pll-peri1-300m", 2, 1, 0);
-static CLK_FIXED_FACTOR(hdmi_cec_32k_clk,   "hdmi-cec-clk32k", "pll-peri0-2x", 1, 36621, 0);
+static SUNXI_CCU_GATE_HWS_WITH_PREDIV(hdmi_cec_32k_clk,
+		"hdmi-cec-clk32k", pll_peri0_2x_hws,
+		0x1680, BIT(30), 36621, 0);
 
 
 #define SUN60IW2_PLL_GPU0_CTRL_REG   0x00E0
@@ -382,9 +388,17 @@ static struct ccu_nm pll_npu_clk = {
 };
 
 #define SUN60IW2_PLL_DE_CTRL_REG   0x02E0
+/*
+ * The PLL and both divided outputs share one control register.  Keep an
+ * explicit critical reference at every level: relying only on the DE0 child
+ * left the CCF enable count live while the hardware bits were incomplete.
+ */
 static struct ccu_nm pll_de_clk = {
+	.output		= BIT(27) | BIT(26),
 	.lock		= BIT(28),
-	.enable		= BIT(27),
+	.lock_enable	= BIT(29),
+	.ldo_en		= BIT(30),
+	.enable		= BIT(31),
 	.n		= _SUNXI_CCU_MULT_MIN_MAX(8, 8, 53, 105),
 	.min_rate	= 1272000000,
 	.max_rate	= 2520000000,
@@ -393,10 +407,11 @@ static struct ccu_nm pll_de_clk = {
 			0x02EC, BIT(27)), /* pattern1 */
 	.common		= {
 		.reg		= 0x02E0,
+		.features	= CCU_FEATURE_KEEP_PLL_ENABLED,
 		.hw.init	= CLK_HW_INIT("pll-de", "pll-ref",
 				&ccu_nm_ops,
 				CLK_SET_RATE_UNGATE |
-				CLK_IGNORE_UNUSED),
+				CLK_IS_CRITICAL),
 	},
 };
 
@@ -404,13 +419,13 @@ static SUNXI_CCU_M_WITH_GATE(pll_de_4x_clk, "pll-de-4x",
 		"pll-de", 0x02E0,
 		20, 3,
 		BIT(27),
-		CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED);
+		CLK_SET_RATE_PARENT | CLK_IS_CRITICAL);
 
 static SUNXI_CCU_M_WITH_GATE(pll_de_3x_clk, "pll-de-3x",
 		"pll-de", 0x02E0,
 		16, 3,
 		BIT(26),
-		CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED);
+		CLK_SET_RATE_PARENT | CLK_IS_CRITICAL);
 
 static const char * const apb0_parents[] = { "sys24M", "osc32k", "iosc", "pll-peri0-600m" };
 SUNXI_CCU_M_WITH_MUX(ahb_clk, "ahb", apb0_parents,
@@ -879,16 +894,20 @@ static SUNXI_CCU_MUX_WITH_GATE(avs_clk, "avs",
 
 static const char * const de0_parents[] = { "pll-de-3x", "pll-de-4x", "pll-peri0-480m", "pll-peri0-400m", "pll-peri0-300m", "pll-video0-4x", "pll-video2-4x" };
 
+/*
+ * DETOP MMIO stalls when this chain is gated.  Keep the main DE0 functional
+ * and bus clocks running; the DE352 CCU still owns the per-mixer gates.
+ */
 static SUNXI_CCU_M_WITH_MUX_GATE(de0_clk, "de0",
 		de0_parents, 0x0A00,
 		0, 5,	/* M */
 		24, 3,	/* mux */
 		BIT(31),	/* gate */
-		CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED);
+		CLK_SET_RATE_PARENT | CLK_IS_CRITICAL);
 
 static SUNXI_CCU_GATE(de0_gate_clk, "de0-gate",
 		"ahb",
-		0x0A04, BIT(0), CLK_IGNORE_UNUSED);
+		0x0A04, BIT(0), CLK_IS_CRITICAL);
 
 static const char * const di_parents[] = { "pll-peri0-600m", "pll-peri0-480m", "pll-peri0-400m", "pll-video0-4x", "pll-video2-4x" };
 
@@ -2254,7 +2273,7 @@ static struct clk_hw_onecell_data sun60iw2_hw_clks = {
 		[CLK_PLL_PERI1_200M]		= &pll_peri1_200m_clk.hw,
 		[CLK_PLL_PERI1_160M]		= &pll_peri1_160m_clk.hw,
 		[CLK_PLL_PERI1_150M]		= &pll_peri1_150m_clk.hw,
-		[CLK_HDMI_CEC_32K]			= &hdmi_cec_32k_clk.hw,
+		[CLK_HDMI_CEC_32K]			= &hdmi_cec_32k_clk.common.hw,
 		[CLK_PLL_GPU0]			= &pll_gpu0_clk.common.hw,
 		[CLK_PLL_VIDEO0]		= &pll_video0_clk.common.hw,
 		[CLK_PLL_VIDEO0_4X]		= &pll_video0_4x_clk.common.hw,
@@ -2567,6 +2586,7 @@ static struct ccu_common *sun60iw2_ccu_clks[] = {
 	&pll_peri0_2x_clk.common,
 	&pll_peri0_800m_clk.common,
 	&pll_peri0_480m_clk.common,
+	&hdmi_cec_32k_clk.common,
 	&pll_peri1_clk.common,
 	&pll_peri1_2x_clk.common,
 	&pll_peri1_800m_clk.common,
@@ -2925,6 +2945,11 @@ static int sun60iw2_ccu_really_probe(struct platform_device *pdev)
 	ret = devm_sunxi_ccu_probe(&pdev->dev, reg, &sun60iw2_ccu_desc);
 	if (ret)
 		return ret;
+
+	/* Enable the shared DE PLL outputs after clock registration. */
+	val = readl(reg + SUN60IW2_PLL_DE_CTRL_REG);
+	val |= BIT(31) | BIT(30) | BIT(29) | BIT(27) | BIT(26);
+	writel(val, reg + SUN60IW2_PLL_DE_CTRL_REG);
 
 	return 0;
 }
