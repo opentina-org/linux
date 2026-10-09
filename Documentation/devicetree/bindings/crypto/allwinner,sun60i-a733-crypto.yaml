@@ -1,0 +1,63 @@
+# SPDX-License-Identifier: GPL-2.0
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/crypto/allwinner,sun60i-a733-crypto.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: Allwinner A733 Crypto Engine
+
+maintainers:
+  - Corentin Labbe <clabbe.montjoie@gmail.com>
+
+properties:
+  compatible:
+    const: allwinner,sun60i-a733-crypto
+
+  reg:
+    maxItems: 1
+
+  interrupts:
+    maxItems: 1
+
+  clocks:
+    items:
+      - description: Bus clock
+      - description: Crypto Engine module clock
+      - description: MBUS clock
+      - description: Crypto Engine system clock
+
+  clock-names:
+    items:
+      - const: bus
+      - const: mod
+      - const: ram
+      - const: sys
+
+  resets:
+    maxItems: 1
+
+required:
+  - compatible
+  - reg
+  - interrupts
+  - clocks
+  - clock-names
+  - resets
+
+additionalProperties: false
+
+examples:
+  - |
+    #include <dt-bindings/clock/sun60i-a733-ccu.h>
+    #include <dt-bindings/interrupt-controller/arm-gic.h>
+    #include <dt-bindings/reset/sun60i-a733-ccu.h>
+
+    crypto@4603000 {
+        compatible = "allwinner,sun60i-a733-crypto";
+        reg = <0x04603000 0x100>;
+        interrupts = <GIC_SPI 168 IRQ_TYPE_EDGE_RISING>;
+        clocks = <&ccu CLK_BUS_CE>, <&ccu CLK_CE>,
+                 <&ccu CLK_MBUS_CE>, <&ccu CLK_CE_SYS>;
+        clock-names = "bus", "mod", "ram", "sys";
+        resets = <&ccu RST_BUS_CE>;
+    };

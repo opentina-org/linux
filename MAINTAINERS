@@ -882,6 +882,7 @@ ALLWINNER CRYPTO DRIVERS
 M:	Corentin Labbe <clabbe.montjoie@gmail.com>
 L:	linux-crypto@vger.kernel.org
 S:	Maintained
+F:	Documentation/devicetree/bindings/crypto/allwinner,sun60i-a733-crypto.yaml
 F:	drivers/crypto/allwinner/
 
 ALLWINNER DMIC DRIVERS
