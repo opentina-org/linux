@@ -47,16 +47,18 @@ static int dwc3_generic_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
-	dwc3g->resets = devm_reset_control_array_get_optional_exclusive(dev);
+	dwc3g->resets = devm_reset_control_array_get_optional_shared(dev);
 	if (IS_ERR(dwc3g->resets))
 		return dev_err_probe(dev, PTR_ERR(dwc3g->resets), "failed to get resets\n");
 
-	ret = reset_control_assert(dwc3g->resets);
-	if (ret)
-		return dev_err_probe(dev, ret, "failed to assert resets\n");
+	if (of_device_get_match_data(dev)) {
+		ret = reset_control_assert(dwc3g->resets);
+		if (ret)
+			return dev_err_probe(dev, ret, "failed to assert resets\n");
 
-	/* Not strict timing, just for safety */
-	udelay(2);
+		/* Not strict timing, just for safety */
+		udelay(2);
+	}
 
 	ret = reset_control_deassert(dwc3g->resets);
 	if (ret)
@@ -143,7 +145,8 @@ static const struct dev_pm_ops dwc3_generic_dev_pm_ops = {
 };
 
 static const struct of_device_id dwc3_generic_of_match[] = {
-	{ .compatible = "spacemit,k1-dwc3", },
+	{ .compatible = "spacemit,k1-dwc3", .data = (void *)true},
+	{ .compatible = "allwinner,sun60i-a733-dwc3", .data = (void*)false},
 	{ /* sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, dwc3_generic_of_match);

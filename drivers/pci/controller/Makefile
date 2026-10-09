@@ -41,6 +41,7 @@ obj-$(CONFIG_PCIE_APPLE) += pcie-apple.o
 obj-$(CONFIG_PCIE_MT7621) += pcie-mt7621.o
 
 # pcie-hisi.o quirks are needed even without CONFIG_PCIE_DW
+obj-y				+= allwinner/
 obj-y				+= dwc/
 obj-y				+= mobiveil/
 obj-y				+= plda/
