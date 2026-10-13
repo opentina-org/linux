@@ -7,6 +7,7 @@
 #define _SUNXI_ENGINE_H_
 
 struct drm_plane;
+struct drm_atomic_state;
 struct drm_crtc;
 struct drm_device;
 struct drm_crtc_state;
@@ -123,6 +124,23 @@ struct sunxi_engine_ops {
 	 */
 	void (*mode_set)(struct sunxi_engine *engine,
 			 const struct drm_display_mode *mode);
+
+	/**
+	 * @quiesce:
+	 *
+	 * Stop the engine from scanning out memory before the CRTC
+	 * is disabled. Optional.
+	 */
+	void (*quiesce)(struct sunxi_engine *engine, struct drm_crtc *crtc);
+
+	/**
+	 * @enable:
+	 *
+	 * (Re)initialize the engine before the TCON is started.
+	 * Optional.
+	 */
+	void (*enable)(struct sunxi_engine *engine,
+		       const struct drm_display_mode *mode);
 };
 
 /**
@@ -214,5 +232,30 @@ sunxi_engine_mode_set(struct sunxi_engine *engine,
 {
 	if (engine->ops && engine->ops->mode_set)
 		engine->ops->mode_set(engine, mode);
+}
+
+/**
+ * sunxi_engine_quiesce() - stop scanout before disabling the timing controller
+ * @engine: engine attached to the CRTC
+ * @crtc: CRTC being disabled
+ */
+static inline void
+sunxi_engine_quiesce(struct sunxi_engine *engine, struct drm_crtc *crtc)
+{
+	if (engine->ops && engine->ops->quiesce)
+		engine->ops->quiesce(engine, crtc);
+}
+
+/**
+ * sunxi_engine_enable() - prepare scanout before starting the timing controller
+ * @engine: engine attached to the CRTC
+ * @mode: adjusted display mode
+ */
+static inline void
+sunxi_engine_enable(struct sunxi_engine *engine,
+		    const struct drm_display_mode *mode)
+{
+	if (engine->ops && engine->ops->enable)
+		engine->ops->enable(engine, mode);
 }
 #endif /* _SUNXI_ENGINE_H_ */

@@ -127,6 +127,11 @@ struct dw_hdmi_plat_data {
 	struct regmap *regm;
 
 	unsigned int output_port;
+	/* Optional sink settling delays; zero preserves the default behavior. */
+	unsigned int hpd_debounce_ms;
+	/* Number of additional DDC attempts after the initial EDID read. */
+	unsigned int edid_retry_count;
+	unsigned int edid_retry_delay_ms;
 
 	unsigned long input_bus_encoding;
 	bool use_drm_infoframe;

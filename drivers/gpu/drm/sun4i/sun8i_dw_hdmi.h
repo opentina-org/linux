@@ -13,6 +13,8 @@
 #include <linux/regulator/consumer.h>
 #include <linux/reset.h>
 
+#include "sun60i_hdmi.h"
+
 #define SUN8I_HDMI_PHY_DBG_CTRL_REG	0x0000
 #define SUN8I_HDMI_PHY_DBG_CTRL_PX_LOCK		BIT(0)
 #define SUN8I_HDMI_PHY_DBG_CTRL_POL_MASK	GENMASK(15, 8)
@@ -175,6 +177,7 @@ struct sun8i_dw_hdmi_quirks {
 					   const struct drm_display_info *info,
 					   const struct drm_display_mode *mode);
 	unsigned int use_drm_infoframe : 1;
+	unsigned int integrated_phy : 1;
 };
 
 struct sun8i_dw_hdmi {
@@ -187,6 +190,7 @@ struct sun8i_dw_hdmi {
 	struct regulator		*regulator;
 	const struct sun8i_dw_hdmi_quirks *quirks;
 	struct reset_control		*rst_ctrl;
+	struct sun60i_hdmi		sun60i;
 };
 
 extern struct platform_driver sun8i_hdmi_phy_driver;

@@ -87,6 +87,16 @@ config SUN60I_A733_CPUPLL_CCU
 	default ARCH_SUNXI
 	depends on ARM64 || COMPILE_TEST
 
+config SUN60I_DE352_CCU
+	tristate "Support for the Allwinner A733 DE352 DETOP CCU"
+	default ARCH_SUNXI
+	depends on ARM64 || COMPILE_TEST
+	help
+	  Enable support for the clock and reset controller in the DE352
+	  display engine top block found in the Allwinner A733 SoC. It controls
+	  the mixer module clocks, display gates and shared memory bus clock.
+	  This controller is required by the A733 display engine driver.
+
 config SUN4I_A10_CCU
 	tristate "Support for the Allwinner A10/A20 CCU"
 	default ARCH_SUNXI

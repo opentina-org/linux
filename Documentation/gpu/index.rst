@@ -20,6 +20,7 @@ GPU Driver Developer's Guide
    vgaarbiter
    automated_testing
    implementation_guidelines
+   sun60i-a733-display
    todo
    rfc/index
 

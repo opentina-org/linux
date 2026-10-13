@@ -6,9 +6,12 @@
  * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
+#include <linux/bitfield.h>
 #include <linux/component.h>
+#include <linux/delay.h>
 #include <linux/ioport.h>
 #include <linux/media-bus-format.h>
+#include <linux/minmax.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/of_platform.h>
@@ -39,6 +42,81 @@
 #include "sun4i_tcon_dclk.h"
 #include "sun8i_tcon_top.h"
 #include "sunxi_engine.h"
+
+static void sun60i_tcon1_mode_set(struct sun4i_tcon *tcon,
+				  const struct drm_display_mode *mode)
+{
+	unsigned int hdisplay = mode->crtc_hdisplay;
+	unsigned int hsync = mode->crtc_hsync_end - mode->crtc_hsync_start;
+	unsigned int hback = mode->crtc_htotal - mode->crtc_hsync_end;
+	unsigned int vdisplay = mode->crtc_vdisplay;
+	unsigned int vtotal = mode->crtc_vtotal;
+	bool interlace = !!(mode->flags & DRM_MODE_FLAG_INTERLACE);
+	unsigned int field_div = interlace ? 2 : 1;
+	unsigned int vsync = (mode->crtc_vsync_end - mode->crtc_vsync_start) /
+			     field_div;
+	unsigned int vback = (mode->crtc_vtotal - mode->crtc_vsync_end) /
+			     field_div;
+	unsigned int visible_lines = vdisplay / field_div;
+	int start_delay;
+	u32 val;
+
+	WARN_ON(!tcon->quirks->has_channel_1);
+
+	/* Pixel clock lives on HDMI CLK_HDMI_TV; keep sclk1 as bus helper. */
+	clk_set_rate(tcon->sclk1, mode->crtc_clock * 1000);
+
+	regmap_write(tcon->regs, SUN60I_TCON_TV_DATA_IO_POL0_REG, 0);
+	regmap_write(tcon->regs, SUN60I_TCON_TV_DATA_IO_POL1_REG, 0);
+	regmap_write(tcon->regs, SUN60I_TCON_TV_DATA_IO_TRI0_REG, 0xffffffff);
+	regmap_write(tcon->regs, SUN60I_TCON_TV_DATA_IO_TRI1_REG, 0xffff0000);
+	regmap_write(tcon->regs, SUN60I_TCON_PIXEL_DEPTH_MODE_REG,
+		     SUN60I_TCON_PIXELDEPTH_8BIT);
+
+	regmap_write(tcon->regs, SUN60I_TCON_TV_IO_TRI_REG, 0x0fffffff);
+	regmap_write(tcon->regs, SUN4I_TCON0_IO_POL_REG, 0x07000000);
+
+	/* BASIC1 = VT (A733); skip legacy BASIC0 upscale layout. */
+	val = SUN60I_TCON_TV_BASIC1_VT(interlace ? vtotal : vtotal * 2);
+	regmap_write(tcon->regs, SUN4I_TCON1_BASIC1_REG, val);
+
+	regmap_write(tcon->regs, SUN4I_TCON1_BASIC2_REG,
+		     SUN4I_TCON1_BASIC2_X(hdisplay) |
+		     SUN4I_TCON1_BASIC2_Y(visible_lines));
+
+	regmap_write(tcon->regs, SUN4I_TCON1_BASIC3_REG,
+		     SUN4I_TCON1_BASIC3_H_TOTAL(mode->crtc_htotal) |
+		     SUN4I_TCON1_BASIC3_H_BACKPORCH(hsync + hback));
+
+	/* 15.2.10.10: BASIC4 is VBP only on A733. */
+	regmap_write(tcon->regs, SUN4I_TCON1_BASIC4_REG,
+		     SUN60I_TCON_TV_BASIC4_VBP(vsync + vback));
+
+	regmap_write(tcon->regs, SUN4I_TCON1_BASIC5_REG,
+		     SUN4I_TCON1_BASIC5_H_SYNC(hsync) |
+		     SUN4I_TCON1_BASIC5_V_SYNC(vsync));
+
+	/* 2D: fill bypass (15.2.7.4); leave begin/end alone. */
+	regmap_write(tcon->regs, SUN4I_TCON1_FILL_CTL_REG, 0);
+
+	/* Disable CEU (identity / off). */
+	regmap_write(tcon->regs, SUN4I_TCON_CEU_CTL_REG, 0);
+
+	start_delay = (vtotal - vdisplay) / field_div - 5;
+	start_delay = clamp(start_delay, 0, 31);
+
+	val = SUN4I_TCON1_CTL_CLK_DELAY(start_delay);
+	/* Keep EN clear here; channel_set_status() enables the channel. */
+	regmap_write(tcon->regs, SUN4I_TCON1_CTL_REG, val);
+
+	/* PIXEL_MODE=1ppc (must match DE GLB); bit31 matches REF GCTL. */
+	regmap_write(tcon->regs, SUN4I_TCON_GCTL_REG,
+		     SUN4I_TCON_GCTL_TCON_ENABLE |
+		     FIELD_PREP(SUN60I_TCON_TV_GCTL_PIXEL_MODE,
+				SUN60I_TCON_TV_GCTL_PIXEL_1));
+
+	regmap_write(tcon->regs, SUN60I_TCON_TV_SRC_CTL_REG, 0);
+}
 
 static struct drm_connector *sun4i_tcon_get_connector(const struct drm_encoder *encoder)
 {
@@ -727,7 +805,10 @@ void sun4i_tcon_mode_set(struct sun4i_tcon *tcon,
 		break;
 	case DRM_MODE_ENCODER_TVDAC:
 	case DRM_MODE_ENCODER_TMDS:
-		sun4i_tcon1_mode_set(tcon, mode);
+		if (tcon->quirks->sun60i_tv)
+			sun60i_tcon1_mode_set(tcon, mode);
+		else
+			sun4i_tcon1_mode_set(tcon, mode);
 		sun4i_tcon_set_mux(tcon, 1, encoder);
 		break;
 	default:
@@ -1542,6 +1623,18 @@ static const struct sun4i_tcon_quirks sun20i_d1_lcd_quirks = {
 	.set_mux		= sun8i_r40_tcon_tv_set_mux,
 };
 
+static const struct sun4i_tcon_quirks sun60i_a733_tv_quirks = {
+	.has_channel_1		= true,
+	.polarity_in_ch0	= true,
+	.sun60i_tv		= true,
+	/*
+	 * Call R40-style TCON-TOP mux (hdmi gate + PORT_SEL). On A733 VO1,
+	 * PORT_SEL@0x1c is RAZ/WI (devmem write of 0x2 does not stick; GATE@0x20
+	 * is writable). DE→TCON routing is DE2TCON@0x8010, not PORT_SEL.
+	 */
+	.set_mux		= sun8i_r40_tcon_tv_set_mux,
+};
+
 /* sun4i_drv uses this list to check if a device node is a TCON */
 const struct of_device_id sun4i_tcon_of_table[] = {
 	{ .compatible = "allwinner,sun4i-a10-tcon", .data = &sun4i_a10_quirks },
@@ -1561,6 +1654,7 @@ const struct of_device_id sun4i_tcon_of_table[] = {
 	{ .compatible = "allwinner,sun9i-a80-tcon-tv", .data = &sun9i_a80_tcon_tv_quirks },
 	{ .compatible = "allwinner,sun20i-d1-tcon-lcd", .data = &sun20i_d1_lcd_quirks },
 	{ .compatible = "allwinner,sun20i-d1-tcon-tv", .data = &sun8i_r40_tv_quirks },
+	{ .compatible = "allwinner,sun60i-a733-tcon-tv", .data = &sun60i_a733_tv_quirks },
 	{ }
 };
 MODULE_DEVICE_TABLE(of, sun4i_tcon_of_table);

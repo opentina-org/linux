@@ -130,6 +130,33 @@
 #define SUN4I_TCON1_CTL_CLK_DELAY(delay)		((delay << 4) & SUN4I_TCON1_CTL_CLK_DELAY_MASK)
 #define SUN4I_TCON1_CTL_SRC_SEL_MASK			GENMASK(1, 0)
 
+/* A733 TCON-TV: 15.2.10.5 TV_SRC_CTL — bit0 VDBIST, [2:1] pattern. */
+#define SUN60I_TCON_TV_SRC_CTL_REG		0x40
+#define SUN60I_TCON_TV_SRC_CTL_VDBIST		BIT(0)
+#define SUN60I_TCON_TV_SRC_CTL_PATTERN		GENMASK(2, 1)
+
+/* A733 TCON-TV IO at common-module offsets (not 0xf0/0xf4). */
+#define SUN60I_TCON_TV_IO_TRI_REG		0x8c
+#define SUN60I_TCON_TV_IO_TRI_DATA_MASK			GENMASK(23, 0)
+#define SUN60I_TCON_TV_IO_TRI_IO2			BIT(26)
+#define SUN60I_TCON_TV_IO_TRI_IO3			BIT(27)
+#define SUN60I_TCON_TV_DATA_IO_POL0_REG		0x330
+#define SUN60I_TCON_TV_DATA_IO_POL1_REG		0x334
+#define SUN60I_TCON_TV_DATA_IO_TRI0_REG		0x338
+#define SUN60I_TCON_TV_DATA_IO_TRI1_REG		0x33c
+#define SUN60I_TCON_PIXEL_DEPTH_MODE_REG	0x340
+/* 15.2.10.27: PIXELDEPTH 001=8-bit, IPI_FORMAT 000=RGB */
+#define SUN60I_TCON_PIXELDEPTH_8BIT			0x1
+
+/* A733 TV_GCTL @0x00: PIXEL_MODE[5:4], UNSTRICT[0]; bit31 used like REF. */
+#define SUN60I_TCON_TV_GCTL_PIXEL_MODE		GENMASK(5, 4)
+#define SUN60I_TCON_TV_GCTL_PIXEL_1			0
+
+/* A733 BASIC1 @0x98 is VT, not the legacy upscale X/Y. */
+#define SUN60I_TCON_TV_BASIC1_VT(vt)			((vt) & 0x1ffff)
+/* 15.2.10.10 BASIC4 is VBP only (VT lives in BASIC1). */
+#define SUN60I_TCON_TV_BASIC4_VBP(bp)			(((bp) - 1) & 0x7fff)
+
 #define SUN4I_TCON1_BASIC0_REG			0x94
 #define SUN4I_TCON1_BASIC0_X(width)			((((width) - 1) & 0xfff) << 16)
 #define SUN4I_TCON1_BASIC0_Y(height)			(((height) - 1) & 0xfff)
@@ -243,6 +270,7 @@ struct sun4i_tcon_quirks {
 	bool    needs_edp_reset; /* a80 edp reset needed for tcon0 access */
 	bool	supports_lvds;   /* Does the TCON support an LVDS output? */
 	bool	polarity_in_ch0; /* some tcon1 channels have polarity bits in tcon0 pol register */
+	bool	sun60i_tv;	 /* A733 TCON-TV register map + builtin pattern */
 	u8	dclk_min_div;	/* minimum divider for TCON0 DCLK */
 
 	/* callback to handle tcon muxing options */
@@ -299,5 +327,4 @@ void sun4i_tcon_set_status(struct sun4i_tcon *crtc,
 			   const struct drm_encoder *encoder, bool enable);
 
 extern const struct of_device_id sun4i_tcon_of_table[];
-
 #endif /* __SUN4I_TCON_H__ */

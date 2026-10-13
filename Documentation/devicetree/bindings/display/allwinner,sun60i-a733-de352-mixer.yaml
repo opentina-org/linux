@@ -1,0 +1,83 @@
+# SPDX-License-Identifier: GPL-2.0
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/display/allwinner,sun60i-a733-de352-mixer.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: Allwinner A733 DE352 Mixer
+
+maintainers:
+  - Chen-Yu Tsai <wens@csie.org>
+
+description: |
+  DE352 mixer / display pipe for A733. DT shape follows the T527 A523
+  de33-mixer-0 node (engine/top/display/detop), but the driver is sun60i_de
+  (DE352 RCQ), not sun8i_mixer.
+
+properties:
+  compatible:
+    const: allwinner,sun60i-a733-de352-mixer-0
+
+  reg:
+    items:
+      - description: Channel / overlay engine (DE + 0x100000)
+      - description: RTMX top (DE + 0x8100)
+      - description: Display blender / formatter (DE + 0x280000)
+      - description: DETOP mux block (DE + 0x8000); overlaps de352-clk
+
+  reg-names:
+    items:
+      - const: engine
+      - const: top
+      - const: display
+      - const: detop
+
+  clocks:
+    minItems: 2
+    maxItems: 2
+
+  clock-names:
+    items:
+      - const: bus
+      - const: mod
+
+  resets:
+    maxItems: 1
+
+  reset-names:
+    items:
+      - const: mod
+
+  iommus:
+    maxItems: 1
+
+  power-domains:
+    maxItems: 1
+
+  chn_cfg_mode:
+    $ref: /schemas/types.yaml#/definitions/uint32
+    description: DE352 channel topology selected for this mixer.
+
+  allwinner,tcon-id:
+    $ref: /schemas/types.yaml#/definitions/uint32
+    maximum: 15
+    description: |
+      Hardware TCON device index programmed into the DE2TCON mux for display
+      pipe 0. This is a hardware device index, not an OF graph endpoint ID.
+      A733 TCON-LCD0/1/2 use 0/1/2 respectively.
+
+  ports:
+    $ref: /schemas/graph.yaml#/properties/ports
+
+required:
+  - compatible
+  - reg
+  - reg-names
+  - clocks
+  - clock-names
+  - resets
+  - reset-names
+
+additionalProperties: true
+
+...

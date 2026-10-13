@@ -2457,11 +2457,26 @@ static const struct drm_edid *dw_hdmi_edid_read(struct dw_hdmi *hdmi,
 {
 	const struct drm_edid *drm_edid;
 	const struct edid *edid;
+	unsigned int retry = 0;
 
 	if (!hdmi->ddc)
 		return NULL;
 
-	drm_edid = drm_edid_read_ddc(connector, hdmi->ddc);
+	do {
+		drm_edid = drm_edid_read_ddc(connector, hdmi->ddc);
+		if (drm_edid)
+			break;
+
+		if (retry >= hdmi->plat_data->edid_retry_count ||
+		    hdmi->phy.ops->read_hpd(hdmi, hdmi->phy.data) !=
+						connector_status_connected)
+			break;
+
+		dev_dbg(hdmi->dev, "EDID read failed, retrying (%u/%u)\n",
+			retry + 1, hdmi->plat_data->edid_retry_count);
+		msleep(hdmi->plat_data->edid_retry_delay_ms);
+	} while (++retry);
+
 	if (!drm_edid) {
 		dev_dbg(hdmi->dev, "failed to get edid\n");
 		return NULL;
@@ -3131,6 +3146,20 @@ static irqreturn_t dw_hdmi_irq(int irq, void *dev_id)
 	}
 
 	if (status != connector_status_unknown) {
+		/*
+		 * Some sinks raise HPD before their DDC interface is ready.  Give
+		 * platform glue a way to defer the connected notification so the
+		 * first EDID probe does not fall back to a generic mode.  Recheck
+		 * HPD afterwards in case the cable was removed during the delay.
+		 */
+		if (status == connector_status_connected &&
+		    hdmi->plat_data->hpd_debounce_ms) {
+			msleep(hdmi->plat_data->hpd_debounce_ms);
+			phy_stat = hdmi_readb(hdmi, HDMI_PHY_STAT0);
+			if (!(phy_stat & HDMI_PHY_HPD))
+				status = connector_status_disconnected;
+		}
+
 		dev_dbg(hdmi->dev, "EVENT=%s\n",
 			status == connector_status_connected ?
 			"plugin" : "plugout");
