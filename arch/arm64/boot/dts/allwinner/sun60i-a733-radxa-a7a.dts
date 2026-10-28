@@ -216,5 +216,11 @@
 };
 
 &gpu {
+	/*
+	 * VDD-GPU (DCDC4 of AXP318W) defaults to 800mV, which only allows the
+	 * GPU operate on only up 600MHz.
+	 */
+	assigned-clocks = <&ccu CLK_GPU0>;
+	assigned-clock-rates = <600000000>;
 	status = "okay";
 };

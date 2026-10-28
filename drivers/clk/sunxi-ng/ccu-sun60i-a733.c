@@ -1013,7 +1013,9 @@ static struct ccu_div gpu0_clk = {
 		.features	= CCU_FEATURE_KEY_FIELD,
 		.hw.init        = CLK_HW_INIT_PARENTS("gpu0", gpu0_parents,
 				&ccu_div_ops,
-				CLK_OPS_PARENT_ENABLE | CLK_SET_RATE_NO_REPARENT),
+				CLK_OPS_PARENT_ENABLE		|
+				CLK_SET_RATE_NO_REPARENT	|
+				CLK_SET_RATE_PARENT),
 	},
 };
 
