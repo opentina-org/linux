@@ -1143,7 +1143,6 @@
 			clock-names = "bus", "gpadc";
 			resets = <&ccu RST_BUS_THS0>;
 			#thermal-sensor-cells = <1>;
-			status = "disabled";
 		};
 
 		irtx: irtx@2525000 {
