@@ -29,5 +29,5 @@ config SUN55I_PCK600
 	select PM_GENERIC_DOMAINS
 	help
 	  Say y to enable the PCK-600 power domain driver. This is required
-	  to enable power to certain peripherals, such as the display and
-	  video engines.
+	  to enable power to certain peripherals, such as the display,
+	  video engines, and the VI (CSI/ISP) domain on A733.
