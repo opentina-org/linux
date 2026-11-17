@@ -1,0 +1,69 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+/*
+ * Allwinner A733 cedar-ve (decode + encode) device tree fragment.
+ * Ported from driver_ref sun60iw2p1.dtsi.
+ */
+
+#include <dt-bindings/power/allwinner,sun60i-a733-pck-600.h>
+
+&soc {
+	ve: ve@1c0e000 {
+		compatible = "allwinner,sunxi-cedar-ve";
+		reg = <0x0 0x01c0e000 0x0 0x3000>,
+		      <0x0 0x03000000 0x0 0x10>;
+		interrupts = <GIC_SPI 49 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&ccu CLK_PLL_VE0>,
+			 <&ccu CLK_VE_AHB_GATE>,
+			 <&ccu CLK_DEC_MBUS_GATE>,
+			 <&ccu CLK_VE_DEC_MBUS>,
+			 <&ccu CLK_BUS_VE_DEC>,
+			 <&ccu CLK_VE_DEC>;
+		clock-names = "pll_ve",
+			      "ahb_gate",
+			      "mbus_gate",
+			      "mbus_ve",
+			      "bus_ve",
+			      "ve";
+		resets = <&ccu RST_BUS_VE_DEC>;
+		reset-names = "reset_ve";
+		operating-points-v2 = <&ve_opp_table>;
+		iommus = <&mmu_aw 6 1>;
+		nsi = <&nsi0 7>;
+		power-domains = <&pck600 PD_VE_DEC>;
+		status = "okay";
+	};
+
+	ve1: ve1@1c0e000 {
+		compatible = "allwinner,sunxi-cedar-ve1";
+		iommus = <&mmu_aw 7 1>;
+		nsi = <&nsi0 8>;
+		status = "okay";
+	};
+
+	ve2: ve2@1c10000 {
+		compatible = "allwinner,sunxi-cedar-ve2";
+		reg = <0x0 0x01c10000 0x0 0x1000>,
+		      <0x0 0x03000000 0x0 0x10>;
+		interrupts = <GIC_SPI 48 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&ccu CLK_PLL_VE1>,
+			 <&ccu CLK_VE_ENC_AHB_GATE>,
+			 <&ccu CLK_MBUS_VE_GATE>,
+			 <&ccu CLK_MBUS_VE>,
+			 <&ccu CLK_BUS_VE_ENC>,
+			 <&ccu CLK_VE_ENC0>;
+		clock-names = "pll_ve",
+			      "ahb_gate",
+			      "mbus_gate",
+			      "mbus_ve",
+			      "bus_ve",
+			      "ve";
+		resets = <&ccu RST_BUS_VE_ENC0>;
+		reset-names = "reset_ve";
+		operating-points-v2 = <&ve_opp_table>;
+		iommus = <&mmu_aw 3 1>;
+		nsi = <&nsi0 9>;
+		power-domains = <&pck600 PD_VE_ENC>;
+		ve_top_reg_offset = <0x800>;
+		status = "okay";
+	};
+};

@@ -1263,3 +1263,4 @@
 
 #include "sun60i-a733-gpu.dtsi"
 #include "sun60i-a733-vin.dtsi"
+#include "sun60i-a733-ve.dtsi"
